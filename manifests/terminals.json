@@ -1,0 +1,251 @@
+{
+  "id": "terminals",
+  "name": "Shells & Terminals",
+  "description": "Shell environments, plugins, prompts and modern terminals",
+  "subcategories": [
+    {
+      "id": "shells",
+      "name": "Shells",
+      "packages": [
+        {
+          "id": "zsh",
+          "name": "zsh",
+          "description": "Z Shell",
+          "default": true,
+          "platforms": {
+            "linux": {
+              "method": "apt",
+              "packages": [
+                "zsh"
+              ],
+              "check": "command -v zsh"
+            }
+          }
+        },
+        {
+          "id": "ohmyzsh",
+          "name": "oh-my-zsh",
+          "description": "Zsh framework with plugins and themes",
+          "default": true,
+          "platforms": {
+            "linux": {
+              "method": "custom",
+              "check": "test -d ${ZSH:-$HOME/.oh-my-zsh}",
+              "commands": [
+                "RUNZSH=no CHSH=no sh -c \"$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)\" \"\" --unattended"
+              ]
+            }
+          }
+        },
+        {
+          "id": "fish",
+          "name": "fish",
+          "description": "Friendly Interactive Shell",
+          "default": false,
+          "platforms": {
+            "linux": {
+              "method": "apt",
+              "packages": [
+                "fish"
+              ],
+              "check": "command -v fish"
+            }
+          }
+        },
+        {
+          "id": "pwsh",
+          "name": "powershell",
+          "description": "PowerShell 7 cross-platform",
+          "default": false,
+          "platforms": {
+            "linux": {
+              "method": "custom",
+              "check": "command -v pwsh",
+              "commands": [
+                "set -e && apt-get install -y wget apt-transport-https && wget -q https://packages.microsoft.com/config/debian/12/packages-microsoft-prod.deb -O /tmp/ms.deb && dpkg -i /tmp/ms.deb && apt-get update && apt-get install -y powershell && rm -f /tmp/ms.deb"
+              ]
+            },
+            "windows": {
+              "method": "winget",
+              "id": "Microsoft.PowerShell"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "modern_shell_utils",
+      "name": "Modern Shell Utilities",
+      "packages": [
+        {
+          "id": "zellij",
+          "name": "zellij",
+          "description": "Modern terminal multiplexer (better than tmux)",
+          "default": true,
+          "platforms": {
+            "linux": {
+              "method": "custom",
+              "check": "command -v zellij",
+              "commands": [
+                "TAG=$(curl -Ls -o /dev/null -w %{url_effective} https://github.com/zellij-org/zellij/releases/latest | awk -F/ '{print $NF}') && curl -fsSLo /tmp/zellij.tar.gz \"https://github.com/zellij-org/zellij/releases/download/${TAG}/zellij-x86_64-unknown-linux-musl.tar.gz\" && tar xzf /tmp/zellij.tar.gz -C /tmp zellij && install /tmp/zellij /usr/local/bin/ && rm -f /tmp/zellij*"
+              ]
+            }
+          }
+        },
+        {
+          "id": "yazi",
+          "name": "yazi",
+          "description": "Blazing fast terminal file manager",
+          "default": true,
+          "platforms": {
+            "linux": {
+              "method": "custom",
+              "check": "command -v yazi",
+              "commands": [
+                "curl -fsSL https://yazi-rs.github.io/install.sh | bash"
+              ]
+            }
+          }
+        },
+        {
+          "id": "zoxide",
+          "name": "zoxide",
+          "description": "Smarter cd that learns your habits",
+          "default": true,
+          "platforms": {
+            "linux": {
+              "method": "custom",
+              "check": "command -v zoxide",
+              "commands": [
+                "curl -fsSL https://raw.githubusercontent.com/ajeetdsouza/zoxide/main/install.sh | bash"
+              ]
+            }
+          }
+        },
+        {
+          "id": "eza",
+          "name": "eza",
+          "description": "Modern ls replacement with icons and git",
+          "default": true,
+          "platforms": {
+            "linux": {
+              "method": "apt",
+              "packages": [
+                "eza"
+              ],
+              "check": "command -v eza"
+            }
+          }
+        },
+        {
+          "id": "mise",
+          "name": "mise",
+          "description": "Universal runtime manager (replaces nvm, pyenv, etc.)",
+          "default": true,
+          "platforms": {
+            "linux": {
+              "method": "custom",
+              "check": "command -v mise",
+              "commands": [
+                "curl -fsSL https://mise.run | sh"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "warp",
+      "name": "Warp Terminal",
+      "packages": [
+        {
+          "id": "warp",
+          "name": "warp",
+          "description": "Modern terminal with AI features",
+          "default": false,
+          "platforms": {
+            "linux": {
+              "method": "custom",
+              "check": "command -v warp-terminal || command -v warp",
+              "commands": [
+                "set -e && curl -fsSL https://app.warp.dev/download -o /tmp/warp.deb && (dpkg -i /tmp/warp.deb || apt-get install -f -y) && rm -f /tmp/warp.deb"
+              ]
+            }
+          }
+        },
+        {
+          "id": "warp-themes",
+          "name": "warp-themes",
+          "description": "Official Warp themes repository",
+          "default": false,
+          "platforms": {
+            "linux": {
+              "method": "custom",
+              "check": "test -d ${XDG_DATA_HOME:-$HOME/.local/share}/warp-terminal/themes",
+              "commands": [
+                "mkdir -p ${XDG_DATA_HOME:-$HOME/.local/share}/warp-terminal && cd ${XDG_DATA_HOME:-$HOME/.local/share}/warp-terminal && git clone https://github.com/warpdotdev/themes.git || (cd themes && git pull)"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "zsh_plugins",
+      "name": "Zsh Plugins",
+      "packages": [
+        {
+          "id": "zsh-autosuggestions",
+          "name": "zsh-autosuggestions",
+          "description": "Fish-like autosuggestions",
+          "default": true,
+          "platforms": {
+            "linux": {
+              "method": "custom",
+              "check": "test -d ${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/plugins/zsh-autosuggestions",
+              "commands": [
+                "ZSH_CUSTOM=${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom} && git clone --depth=1 https://github.com/zsh-users/zsh-autosuggestions $ZSH_CUSTOM/plugins/zsh-autosuggestions"
+              ]
+            }
+          }
+        },
+        {
+          "id": "zsh-syntax-highlighting",
+          "name": "zsh-syntax-highlighting",
+          "description": "Syntax highlighting for commands",
+          "default": true,
+          "platforms": {
+            "linux": {
+              "method": "custom",
+              "check": "test -d ${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/plugins/zsh-syntax-highlighting",
+              "commands": [
+                "ZSH_CUSTOM=${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom} && git clone --depth=1 https://github.com/zsh-users/zsh-syntax-highlighting $ZSH_CUSTOM/plugins/zsh-syntax-highlighting"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "prompt",
+      "name": "Prompt & Theme",
+      "packages": [
+        {
+          "id": "starship",
+          "name": "starship",
+          "description": "Fast cross-shell prompt",
+          "default": true,
+          "platforms": {
+            "linux": {
+              "method": "custom",
+              "check": "command -v starship",
+              "commands": [
+                "curl -fsSL https://starship.rs/install.sh | sh -s -- -y"
+              ]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

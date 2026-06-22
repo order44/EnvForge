@@ -1,0 +1,111 @@
+{
+  "id": "editors_jetbrains",
+  "name": "JetBrains IDEs",
+  "description": "JetBrains IDEs (manual install due to regional restrictions)",
+  "subcategories": [
+    {
+      "id": "ides",
+      "name": "IDEs",
+      "packages": [
+        {
+          "id": "toolbox",
+          "name": "JetBrains Toolbox",
+          "description": "Official launcher for all JetBrains IDEs",
+          "default": false,
+          "platforms": {
+            "linux": {
+              "method": "manual",
+              "url": "https://306.antroot.ru/jetbrains-download",
+              "note": "Download Toolbox from the mirror (no VPN), extract to /opt/jetbrains-toolbox/, run jetbrains-toolbox once.\nSee docs/jetbrains.md for activation steps."
+            },
+            "windows": {
+              "method": "manual",
+              "url": "https://306.antroot.ru/jetbrains-download",
+              "note": "Download Toolbox installer from the mirror and run as administrator."
+            }
+          }
+        },
+        {
+          "id": "idea",
+          "name": "IntelliJ IDEA Ultimate",
+          "description": "Java/Kotlin/Scala IDE",
+          "default": false,
+          "platforms": {
+            "linux":   { "method": "manual", "url": "https://306.antroot.ru/jetbrains-download", "note": "Download .tar.gz, extract to /opt/idea, run bin/idea.sh" },
+            "windows": { "method": "manual", "url": "https://306.antroot.ru/jetbrains-download", "note": "Download installer .exe and run." }
+          }
+        },
+        {
+          "id": "pycharm",
+          "name": "PyCharm Professional",
+          "description": "Python IDE",
+          "default": false,
+          "platforms": {
+            "linux":   { "method": "manual", "url": "https://306.antroot.ru/jetbrains-download", "note": "Download .tar.gz, extract to /opt/pycharm" },
+            "windows": { "method": "manual", "url": "https://306.antroot.ru/jetbrains-download" }
+          }
+        },
+        {
+          "id": "goland",
+          "name": "GoLand",
+          "description": "Go IDE",
+          "default": false,
+          "platforms": {
+            "linux":   { "method": "manual", "url": "https://306.antroot.ru/jetbrains-download" },
+            "windows": { "method": "manual", "url": "https://306.antroot.ru/jetbrains-download" }
+          }
+        },
+        {
+          "id": "clion",
+          "name": "CLion",
+          "description": "C/C++ IDE",
+          "default": false,
+          "platforms": {
+            "linux":   { "method": "manual", "url": "https://306.antroot.ru/jetbrains-download" },
+            "windows": { "method": "manual", "url": "https://306.antroot.ru/jetbrains-download" }
+          }
+        },
+        {
+          "id": "rider",
+          "name": "Rider",
+          "description": ".NET IDE",
+          "default": false,
+          "platforms": {
+            "linux":   { "method": "manual", "url": "https://306.antroot.ru/jetbrains-download" },
+            "windows": { "method": "manual", "url": "https://306.antroot.ru/jetbrains-download" }
+          }
+        },
+        {
+          "id": "rustrover",
+          "name": "RustRover",
+          "description": "Rust IDE",
+          "default": false,
+          "platforms": {
+            "linux":   { "method": "manual", "url": "https://306.antroot.ru/jetbrains-download" },
+            "windows": { "method": "manual", "url": "https://306.antroot.ru/jetbrains-download" }
+          }
+        },
+        {
+          "id": "webstorm",
+          "name": "WebStorm",
+          "description": "JS/TS/Vue/React IDE",
+          "default": false,
+          "platforms": {
+            "linux":   { "method": "manual", "url": "https://306.antroot.ru/jetbrains-download" },
+            "windows": { "method": "manual", "url": "https://306.antroot.ru/jetbrains-download" }
+          }
+        },
+        {
+          "id": "datagrip",
+          "name": "DataGrip",
+          "description": "Database IDE",
+          "default": false,
+          "platforms": {
+            "linux":   { "method": "manual", "url": "https://306.antroot.ru/jetbrains-download" },
+            "windows": { "method": "manual", "url": "https://306.antroot.ru/jetbrains-download" }
+          }
+        }
+      ]
+    }
+  ]
+}

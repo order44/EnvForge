@@ -1,0 +1,332 @@
+{
+  "id": "reversing",
+  "name": "Reverse Engineering",
+  "description": "Disassemblers, debuggers, decompilers, analysis tools",
+  "subcategories": [
+    {
+      "id": "disasm",
+      "name": "Disassemblers",
+      "packages": [
+        {
+          "id": "ghidra",
+          "name": "ghidra",
+          "description": "NSA reverse engineering suite",
+          "default": true,
+          "platforms": {
+            "linux": {
+              "method": "custom",
+              "check": "test -L /usr/local/bin/ghidra || ls -d /opt/ghidra_* >/dev/null 2>&1",
+              "commands": [
+                "set -e && GHIDRA_URL=$(curl -fsSL https://api.github.com/repos/NationalSecurityAgency/ghidra/releases/latest | grep -oP '\"browser_download_url\":\\s*\"\\K[^\"]*\\.zip') && curl -fsSLo /tmp/ghidra.zip $GHIDRA_URL && unzip -qo /tmp/ghidra.zip -d /opt/ && rm -f /tmp/ghidra.zip && ln -sf /opt/ghidra_*/ghidraRun /usr/local/bin/ghidra"
+              ]
+            }
+          }
+        },
+        {
+          "id": "radare2",
+          "name": "radare2",
+          "description": "RE framework with CLI",
+          "default": true,
+          "platforms": {
+            "linux": {
+              "method": "apt",
+              "packages": [
+                "radare2"
+              ],
+              "check": "command -v r2"
+            }
+          }
+        },
+        {
+          "id": "rizin",
+          "name": "rizin",
+          "description": "Modern fork of radare2",
+          "default": false,
+          "platforms": {
+            "linux": {
+              "method": "custom",
+              "check": "command -v rizin",
+              "commands": [
+                "apt-get update -qq && apt-get install -y rizin 2>/dev/null || echo 'Rizin not in apt, skipping'"
+              ]
+            }
+          }
+        },
+        {
+          "id": "cutter",
+          "name": "cutter",
+          "description": "GUI for rizin",
+          "default": false,
+          "platforms": {
+            "linux": {
+              "method": "custom",
+              "check": "command -v cutter",
+              "commands": [
+                "TAG=$(curl -Ls -o /dev/null -w %{url_effective} https://github.com/rizinorg/cutter/releases/latest | awk -F/ '{print $NF}') && curl -fsSLo /usr/local/bin/cutter \"https://github.com/rizinorg/cutter/releases/download/${TAG}/Cutter-${TAG}-Linux-x86_64.AppImage\" && chmod +x /usr/local/bin/cutter"
+              ]
+            }
+          }
+        },
+        {
+          "id": "ida",
+          "name": "IDA Pro 9.3 SP1",
+          "description": "Commercial disassembler (manual install)",
+          "default": false,
+          "platforms": {
+            "linux": {
+              "method": "manual",
+              "note": "Place IDA Pro archive next to envforge in ./ida_archive/, then follow docs/ida.md to extract and apply keygen.py."
+            },
+            "windows": {
+              "method": "manual",
+              "note": "Place IDA Pro archive next to envforge in .\\ida_archive\\, then follow docs/ida.md to run the installer and apply keygen.py."
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "fresh-terraform-lsp",
+      "name": "terraform-ls",
+      "description": "Terraform LSP",
+      "default": false,
+      "platforms": {
+        "linux": {
+          "method": "custom",
+          "check": "command -v terraform-ls",
+          "commands": [
+            "set -e && curl -fsSLo /tmp/tfls.zip https://releases.hashicorp.com/terraform-ls/0.32.7/terraform-ls_0.32.7_linux_amd64.zip && unzip -qo /tmp/tfls.zip -d /tmp/tfls && install /tmp/tfls/terraform-ls /usr/local/bin/ && rm -rf /tmp/tfls /tmp/tfls.zip"
+          ]
+        }
+      }
+    },
+    {
+      "id": "debuggers",
+      "name": "Debuggers",
+      "packages": [
+        {
+          "id": "gdb-re",
+          "name": "gdb",
+          "description": "GNU debugger",
+          "default": true,
+          "platforms": {
+            "linux": {
+              "method": "apt",
+              "packages": [
+                "gdb"
+              ],
+              "check": "command -v gdb"
+            }
+          }
+        },
+        {
+          "id": "pwndbg",
+          "name": "pwndbg",
+          "description": "GDB plugin for exploit dev",
+          "default": true,
+          "platforms": {
+            "linux": {
+              "method": "custom",
+              "check": "test -d /opt/pwndbg",
+              "commands": [
+                "if [ -d /opt/pwndbg ]; then cd /opt/pwndbg && git pull 2>/dev/null; else git clone --depth=1 https://github.com/pwndbg/pwndbg /opt/pwndbg; fi && cd /opt/pwndbg && ./setup.sh"
+              ]
+            }
+          }
+        },
+        {
+          "id": "gef",
+          "name": "gef",
+          "description": "GDB Enhanced Features",
+          "default": false,
+          "platforms": {
+            "linux": {
+              "method": "custom",
+              "check": "test -f /root/.gdbinit-gef.py || test -f $HOME/.gdbinit-gef.py",
+              "commands": [
+                "bash -c \"$(curl -fsSL https://gef.blah.cat/sh)\""
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "decompilers",
+      "name": "Decompilers",
+      "packages": [
+        {
+          "id": "jadx",
+          "name": "jadx",
+          "description": "Java/APK decompiler",
+          "default": true,
+          "platforms": {
+            "linux": {
+              "method": "custom",
+              "check": "command -v jadx",
+              "commands": [
+                "set -e && JADX_URL=$(curl -fsSL https://api.github.com/repos/skylot/jadx/releases/latest | grep -oP '\"browser_download_url\":\\s*\"\\K[^\"]*jadx[^\"]*\\.zip' | grep -iv windows | grep -iv gui | head -1) && curl -fsSLo /tmp/jadx.zip \"$JADX_URL\" && rm -rf /opt/jadx && unzip -qo /tmp/jadx.zip -d /opt/jadx && chmod +x /opt/jadx/bin/* 2>/dev/null ; ln -sf /opt/jadx/bin/jadx /usr/local/bin/jadx ; ln -sf /opt/jadx/bin/jadx-gui /usr/local/bin/jadx-gui ; rm -f /tmp/jadx.zip"
+              ]
+            }
+          }
+        },
+        {
+          "id": "pycdc",
+          "name": "pycdc",
+          "description": "Python bytecode decompiler",
+          "default": false,
+          "platforms": {
+            "linux": {
+              "method": "custom",
+              "check": "command -v pycdc",
+              "commands": [
+                "set -e && rm -rf /tmp/pycdc && git clone --depth=1 https://github.com/zrax/pycdc /tmp/pycdc && cd /tmp/pycdc && cmake . && make -j$(nproc) && install pycdc pycdas /usr/local/bin/ && rm -rf /tmp/pycdc"
+              ]
+            }
+          }
+        },
+        {
+          "id": "uncompyle6",
+          "name": "uncompyle6",
+          "description": "Python 2/3 bytecode decompiler",
+          "default": false,
+          "platforms": {
+            "linux": {
+              "method": "pip",
+              "packages": [
+                "uncompyle6"
+              ],
+              "check": "command -v uncompyle6"
+            }
+          }
+        },
+        {
+          "id": "apktool",
+          "name": "apktool",
+          "description": "Android APK reverse tool",
+          "default": false,
+          "platforms": {
+            "linux": {
+              "method": "custom",
+              "check": "command -v apktool",
+              "commands": [
+                "set -e && curl -fsSLo /usr/local/bin/apktool https://raw.githubusercontent.com/iBotPeaches/Apktool/master/scripts/linux/apktool && curl -fsSLo /usr/local/bin/apktool.jar $(curl -fsSL https://api.github.com/repos/iBotPeaches/Apktool/releases/latest | grep -oP '\"browser_download_url\":\\s*\"\\K[^\"]*\\.jar') && chmod +x /usr/local/bin/apktool"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "analysis",
+      "name": "Binary Analysis",
+      "packages": [
+        {
+          "id": "binwalk",
+          "name": "binwalk",
+          "description": "Firmware analysis tool",
+          "default": true,
+          "platforms": {
+            "linux": {
+              "method": "apt",
+              "packages": [
+                "binwalk"
+              ],
+              "check": "command -v binwalk"
+            }
+          }
+        },
+        {
+          "id": "upx",
+          "name": "upx",
+          "description": "Executable packer/unpacker",
+          "default": true,
+          "platforms": {
+            "linux": {
+              "method": "apt",
+              "packages": [
+                "upx"
+              ],
+              "check": "command -v upx"
+            }
+          }
+        },
+        {
+          "id": "binutils-re",
+          "name": "binutils",
+          "description": "objdump, readelf, strings, nm",
+          "default": true,
+          "platforms": {
+            "linux": {
+              "method": "apt",
+              "packages": [
+                "binutils"
+              ],
+              "check": "command -v objdump"
+            }
+          }
+        },
+        {
+          "id": "strace-re",
+          "name": "strace",
+          "description": "System call tracer",
+          "default": true,
+          "platforms": {
+            "linux": {
+              "method": "apt",
+              "packages": [
+                "strace"
+              ],
+              "check": "command -v strace"
+            }
+          }
+        },
+        {
+          "id": "ltrace",
+          "name": "ltrace",
+          "description": "Library call tracer",
+          "default": false,
+          "platforms": {
+            "linux": {
+              "method": "apt",
+              "packages": [
+                "ltrace"
+              ],
+              "check": "command -v ltrace"
+            }
+          }
+        },
+        {
+          "id": "foremost",
+          "name": "foremost",
+          "description": "File carving tool",
+          "default": false,
+          "platforms": {
+            "linux": {
+              "method": "apt",
+              "packages": [
+                "foremost"
+              ],
+              "check": "command -v foremost"
+            }
+          }
+        },
+        {
+          "id": "frida",
+          "name": "frida-tools",
+          "description": "Dynamic instrumentation toolkit",
+          "default": false,
+          "platforms": {
+            "linux": {
+              "method": "pip",
+              "packages": [
+                "frida-tools"
+              ],
+              "check": "command -v frida"
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

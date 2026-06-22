@@ -1,0 +1,125 @@
+{
+  "id": "editors_other",
+  "name": "Other Editors",
+  "description": "Terminal-based and lightweight editors",
+  "subcategories": [
+    {
+      "id": "terminal_editors",
+      "name": "Terminal Editors",
+      "packages": [
+        {
+          "id": "micro",
+          "name": "micro",
+          "description": "Modern terminal text editor",
+          "default": true,
+          "platforms": {
+            "linux": {
+              "method": "custom",
+              "check": "command -v micro",
+              "commands": [
+                "set -e && cd /tmp && curl -fsSL https://getmic.ro | bash && install ./micro /usr/local/bin/ && rm -f /tmp/micro"
+              ]
+            },
+            "windows": {
+              "method": "winget",
+              "id": "zyedidia.micro"
+            }
+          }
+        },
+        {
+          "id": "vim",
+          "name": "vim",
+          "description": "Vi IMproved",
+          "default": false,
+          "platforms": {
+            "linux": {
+              "method": "apt",
+              "packages": [
+                "vim"
+              ],
+              "check": "command -v vim"
+            }
+          }
+        },
+        {
+          "id": "neovim",
+          "name": "neovim",
+          "description": "Hyperextensible Vim-based editor",
+          "default": false,
+          "platforms": {
+            "linux": {
+              "method": "apt",
+              "packages": [
+                "neovim"
+              ],
+              "check": "command -v nvim"
+            },
+            "windows": {
+              "method": "winget",
+              "id": "Neovim.Neovim"
+            }
+          }
+        },
+        {
+          "id": "nano",
+          "name": "nano",
+          "description": "Simple terminal editor",
+          "default": false,
+          "platforms": {
+            "linux": {
+              "method": "apt",
+              "packages": [
+                "nano"
+              ],
+              "check": "command -v nano"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "markdown",
+      "name": "Markdown Editors",
+      "packages": [
+        {
+          "id": "obsidian",
+          "name": "obsidian",
+          "description": "Markdown-based knowledge base",
+          "default": false,
+          "platforms": {
+            "linux": {
+              "method": "custom",
+              "check": "command -v obsidian",
+              "commands": [
+                "set -e && OBS_URL=$(curl -fsSL https://api.github.com/repos/obsidianmd/obsidian-releases/releases/latest | grep -oP '\"browser_download_url\":\\s*\"\\K[^\"]*amd64\\.deb' | head -1) && curl -fsSLo /tmp/obsidian.deb \"$OBS_URL\" && (dpkg -i /tmp/obsidian.deb || apt-get install -f -y) && rm -f /tmp/obsidian.deb"
+              ]
+            },
+            "windows": {
+              "method": "winget",
+              "id": "Obsidian.Obsidian"
+            }
+          }
+        },
+        {
+          "id": "marktext",
+          "name": "Mark Text",
+          "description": "Simple, elegant Markdown editor",
+          "default": false,
+          "platforms": {
+            "linux": {
+              "method": "custom",
+              "check": "command -v marktext",
+              "commands": [
+                "curl -fsSLo /tmp/marktext.deb \"https://github.com/marktext/marktext/releases/download/v0.16.3/marktext-amd64.deb\" && (dpkg -i /tmp/marktext.deb || apt-get install -f -y) && rm -f /tmp/marktext.deb"
+              ]
+            },
+            "windows": {
+              "method": "winget",
+              "id": "marktext.marktext"
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

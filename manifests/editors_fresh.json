@@ -1,0 +1,268 @@
+{
+  "id": "editors_fresh",
+  "name": "Fresh IDE",
+  "description": "Fresh \u2014 terminal-based IDE with LSP, plugins, vim mode, SSH remote editing",
+  "subcategories": [
+    {
+      "id": "fresh_app",
+      "name": "Editor",
+      "packages": [
+        {
+          "id": "fresh",
+          "name": "fresh",
+          "description": "Terminal IDE (Rust) with built-in LSP support for 15+ languages",
+          "default": true,
+          "platforms": {
+            "linux": {
+              "method": "custom",
+              "check": "command -v fresh",
+              "commands": [
+                "set -e && for i in 1 2 3; do curl -fsSL --retry 3 --retry-delay 2 --connect-timeout 15 https://raw.githubusercontent.com/sinelaw/fresh/refs/heads/master/scripts/install.sh -o /tmp/fresh-install.sh && break || sleep 3; done && sh /tmp/fresh-install.sh && rm -f /tmp/fresh-install.sh"
+              ]
+            },
+            "windows": {
+              "method": "winget",
+              "id": "fresh-editor"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "fresh_lsp_servers",
+      "name": "LSP Servers (used by Fresh)",
+      "packages": [
+        {
+          "id": "fresh-pylsp",
+          "name": "python-lsp-server",
+          "description": "Python LSP server",
+          "default": true,
+          "platforms": {
+            "linux": {
+              "method": "pipx",
+              "packages": [
+                "python-lsp-server[all]"
+              ],
+              "check": "command -v pylsp"
+            },
+            "windows": {
+              "method": "pip",
+              "packages": [
+                "python-lsp-server[all]"
+              ]
+            }
+          }
+        },
+        {
+          "id": "fresh-rust-lsp",
+          "name": "rust-analyzer (for Fresh)",
+          "description": "Rust LSP (also used by other editors)",
+          "default": false,
+          "platforms": {
+            "linux": {
+              "method": "custom",
+              "check": "command -v rust-analyzer",
+              "commands": [
+                ". $HOME/.cargo/env 2>/dev/null; rustup component add rust-analyzer 2>/dev/null || true"
+              ]
+            }
+          }
+        },
+        {
+          "id": "fresh-go-lsp",
+          "name": "gopls (for Fresh)",
+          "description": "Go LSP",
+          "default": false,
+          "platforms": {
+            "linux": {
+              "method": "custom",
+              "check": "command -v gopls",
+              "commands": [
+                "GOBIN=/usr/local/bin /usr/local/go/bin/go install golang.org/x/tools/gopls@latest 2>/dev/null || true"
+              ]
+            }
+          }
+        },
+        {
+          "id": "fresh-clangd",
+          "name": "clangd (for Fresh)",
+          "description": "C/C++ LSP",
+          "default": false,
+          "platforms": {
+            "linux": {
+              "method": "apt",
+              "packages": [
+                "clangd"
+              ],
+              "check": "command -v clangd"
+            }
+          }
+        },
+        {
+          "id": "fresh-ts-lsp",
+          "name": "typescript-language-server (for Fresh)",
+          "description": "TypeScript/JavaScript LSP",
+          "default": false,
+          "platforms": {
+            "linux": {
+              "method": "npm",
+              "packages": [
+                "typescript-language-server",
+                "typescript"
+              ],
+              "check": "command -v typescript-language-server"
+            },
+            "windows": {
+              "method": "npm",
+              "packages": [
+                "typescript-language-server",
+                "typescript"
+              ]
+            }
+          }
+        },
+        {
+          "id": "fresh-vue-lsp",
+          "name": "vue-language-server (for Fresh)",
+          "description": "Vue LSP",
+          "default": false,
+          "platforms": {
+            "linux": {
+              "method": "npm",
+              "packages": [
+                "@vue/language-server"
+              ],
+              "check": "command -v vue-language-server"
+            },
+            "windows": {
+              "method": "npm",
+              "packages": [
+                "@vue/language-server"
+              ]
+            }
+          }
+        },
+        {
+          "id": "fresh-svelte-lsp",
+          "name": "svelte-language-server",
+          "description": "Svelte LSP",
+          "default": false,
+          "platforms": {
+            "linux": {
+              "method": "npm",
+              "packages": [
+                "svelte-language-server"
+              ],
+              "check": "command -v svelteserver"
+            },
+            "windows": {
+              "method": "npm",
+              "packages": [
+                "svelte-language-server"
+              ]
+            }
+          }
+        },
+        {
+          "id": "fresh-bash-lsp",
+          "name": "bash-language-server (for Fresh)",
+          "description": "Bash LSP",
+          "default": false,
+          "platforms": {
+            "linux": {
+              "method": "npm",
+              "packages": [
+                "bash-language-server"
+              ],
+              "check": "command -v bash-language-server"
+            },
+            "windows": {
+              "method": "npm",
+              "packages": [
+                "bash-language-server"
+              ]
+            }
+          }
+        },
+        {
+          "id": "fresh-yaml-lsp",
+          "name": "yaml-language-server",
+          "description": "YAML LSP",
+          "default": false,
+          "platforms": {
+            "linux": {
+              "method": "npm",
+              "packages": [
+                "yaml-language-server"
+              ],
+              "check": "command -v yaml-language-server"
+            },
+            "windows": {
+              "method": "npm",
+              "packages": [
+                "yaml-language-server"
+              ]
+            }
+          }
+        },
+        {
+          "id": "fresh-json-lsp",
+          "name": "vscode-json-languageserver",
+          "description": "JSON LSP",
+          "default": false,
+          "platforms": {
+            "linux": {
+              "method": "npm",
+              "packages": [
+                "vscode-json-languageserver"
+              ],
+              "check": "command -v vscode-json-languageserver"
+            },
+            "windows": {
+              "method": "npm",
+              "packages": [
+                "vscode-json-languageserver"
+              ]
+            }
+          }
+        },
+        {
+          "id": "fresh-dockerfile-lsp",
+          "name": "dockerfile-language-server",
+          "description": "Dockerfile LSP",
+          "default": false,
+          "platforms": {
+            "linux": {
+              "method": "npm",
+              "packages": [
+                "dockerfile-language-server-nodejs"
+              ],
+              "check": "command -v docker-langserver"
+            },
+            "windows": {
+              "method": "npm",
+              "packages": [
+                "dockerfile-language-server-nodejs"
+              ]
+            }
+          }
+        },
+        {
+          "id": "fresh-terraform-lsp",
+          "name": "terraform-ls",
+          "description": "Terraform LSP",
+          "default": false,
+          "platforms": {
+            "linux": {
+              "method": "custom",
+              "check": "command -v terraform-ls",
+              "commands": [
+                "curl -fsSLo /tmp/tfls.zip \"https://releases.hashicorp.com/terraform-ls/0.33.0/terraform-ls_0.33.0_linux_amd64.zip\" && unzip -qo /tmp/tfls.zip -d /tmp && install /tmp/terraform-ls /usr/local/bin/ && rm -f /tmp/tfls.zip /tmp/terraform-ls"
+              ]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,89 @@
+{
+  "id": "containers",
+  "name": "Containers & Virtualization",
+  "description": "Docker, distrobox, podman and related tools",
+  "subcategories": [
+    {
+      "id": "docker",
+      "name": "Docker",
+      "packages": [
+        {
+          "id": "docker",
+          "name": "docker",
+          "description": "Container runtime",
+          "default": false,
+          "platforms": {
+            "linux": {
+              "method": "custom",
+              "check": "command -v docker",
+              "commands": [
+                "curl -fsSL https://get.docker.com | sh"
+              ]
+            },
+            "windows": { "method": "winget", "id": "Docker.DockerDesktop" }
+          }
+        },
+        {
+          "id": "docker-compose",
+          "name": "docker-compose",
+          "description": "Multi-container orchestration",
+          "default": false,
+          "platforms": {
+            "linux": { "method": "apt", "packages": ["docker-compose-plugin"], "check": "docker compose version >/dev/null 2>&1" }
+          }
+        },
+        {
+          "id": "lazydocker",
+          "name": "lazydocker",
+          "description": "TUI for Docker management",
+          "default": true,
+          "platforms": {
+            "linux": {
+              "method": "custom",
+              "check": "command -v lazydocker",
+              "commands": [
+                "GOBIN=/usr/local/bin /usr/local/go/bin/go install github.com/jesseduffield/lazydocker@latest 2>/dev/null || echo 'install go first'"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "distrobox",
+      "name": "Distrobox",
+      "packages": [
+        {
+          "id": "distrobox",
+          "name": "distrobox",
+          "description": "Run any Linux distro in a container",
+          "default": true,
+          "platforms": {
+            "linux": {
+              "method": "custom",
+              "check": "command -v distrobox",
+              "commands": [
+                "curl -s https://raw.githubusercontent.com/89luca89/distrobox/main/install | sh -s -- --prefix /usr/local"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "podman",
+      "name": "Podman",
+      "packages": [
+        {
+          "id": "podman",
+          "name": "podman",
+          "description": "Daemonless container engine",
+          "default": false,
+          "platforms": {
+            "linux": { "method": "apt", "packages": ["podman"], "check": "command -v podman" }
+          }
+        }
+      ]
+    }
+  ]
+}

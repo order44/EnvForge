@@ -1,0 +1,301 @@
+{
+  "id": "dev_tools",
+  "name": "Dev Tools",
+  "description": "Modern CLI utilities for productive development",
+  "subcategories": [
+    {
+      "id": "modern_cli",
+      "name": "Modern CLI",
+      "packages": [
+        {
+          "id": "ripgrep",
+          "name": "ripgrep",
+          "description": "Fast grep, respects .gitignore",
+          "default": true,
+          "platforms": {
+            "linux": {
+              "method": "apt",
+              "packages": [
+                "ripgrep"
+              ],
+              "check": "command -v rg"
+            },
+            "windows": {
+              "method": "winget",
+              "id": "BurntSushi.ripgrep.MSVC"
+            }
+          }
+        },
+        {
+          "id": "fd",
+          "name": "fd",
+          "description": "Fast and user-friendly find",
+          "default": true,
+          "platforms": {
+            "linux": {
+              "method": "apt",
+              "packages": [
+                "fd-find"
+              ],
+              "check": "command -v fd || command -v fdfind",
+              "post_install": [
+                "ln -sf /usr/bin/fdfind /usr/local/bin/fd"
+              ]
+            },
+            "windows": {
+              "method": "winget",
+              "id": "sharkdp.fd"
+            }
+          }
+        },
+        {
+          "id": "bat",
+          "name": "bat",
+          "description": "cat with syntax highlighting",
+          "default": true,
+          "platforms": {
+            "linux": {
+              "method": "apt",
+              "packages": [
+                "bat"
+              ],
+              "check": "command -v bat || command -v batcat",
+              "post_install": [
+                "ln -sf /usr/bin/batcat /usr/local/bin/bat"
+              ]
+            },
+            "windows": {
+              "method": "winget",
+              "id": "sharkdp.bat"
+            }
+          }
+        },
+        {
+          "id": "fzf",
+          "name": "fzf",
+          "description": "General-purpose fuzzy finder",
+          "default": true,
+          "platforms": {
+            "linux": {
+              "method": "apt",
+              "packages": [
+                "fzf"
+              ],
+              "check": "command -v fzf"
+            },
+            "windows": {
+              "method": "winget",
+              "id": "junegunn.fzf"
+            }
+          }
+        },
+        {
+          "id": "tldr",
+          "name": "tldr",
+          "description": "Simplified man pages with examples",
+          "default": true,
+          "platforms": {
+            "linux": {
+              "method": "npm",
+              "packages": [
+                "tldr"
+              ],
+              "check": "command -v tldr"
+            },
+            "windows": {
+              "method": "npm",
+              "packages": [
+                "tldr"
+              ],
+              "check": "where tldr &gt;NUL 2&gt;&amp;1"
+            }
+          }
+        },
+        {
+          "id": "lazygit",
+          "name": "lazygit",
+          "description": "TUI for git",
+          "default": true,
+          "platforms": {
+            "linux": {
+              "method": "custom",
+              "check": "command -v lazygit",
+              "commands": [
+                "TAG=$(curl -Ls -o /dev/null -w %{url_effective} https://github.com/jesseduffield/lazygit/releases/latest | awk -F/ '{print $NF}') && curl -fsSLo /tmp/lazygit.tar.gz \"https://github.com/jesseduffield/lazygit/releases/download/${TAG}/lazygit_${TAG#v}_Linux_x86_64.tar.gz\" && tar xf /tmp/lazygit.tar.gz -C /tmp lazygit && install /tmp/lazygit /usr/local/bin/ && rm -f /tmp/lazygit /tmp/lazygit.tar.gz"
+              ]
+            },
+            "windows": {
+              "method": "winget",
+              "id": "JesseDuffield.lazygit"
+            }
+          }
+        },
+        {
+          "id": "delta",
+          "name": "delta",
+          "description": "Git diff viewer with syntax highlighting",
+          "default": true,
+          "platforms": {
+            "linux": {
+              "method": "custom",
+              "check": "command -v delta",
+              "commands": [
+                "TAG=$(curl -Ls -o /dev/null -w %{url_effective} https://github.com/dandavison/delta/releases/latest | awk -F/ '{print $NF}') && curl -fsSLo /tmp/delta.deb \"https://github.com/dandavison/delta/releases/download/${TAG}/git-delta_${TAG}_amd64.deb\" && (dpkg -i /tmp/delta.deb || apt-get install -f -y) && rm -f /tmp/delta.deb"
+              ]
+            }
+          }
+        },
+        {
+          "id": "lazydocker",
+          "name": "lazydocker",
+          "description": "TUI for Docker management",
+          "default": true,
+          "platforms": {
+            "linux": {
+              "method": "custom",
+              "check": "command -v lazydocker",
+              "commands": [
+                "GOBIN=/usr/local/bin /usr/local/go/bin/go install github.com/jesseduffield/lazydocker@latest 2>/dev/null || echo 'install go first'"
+              ]
+            }
+          }
+        },
+        {
+          "id": "bottom",
+          "name": "bottom",
+          "description": "System monitor (htop alternative)",
+          "default": true,
+          "platforms": {
+            "linux": {
+              "method": "custom",
+              "check": "command -v btm",
+              "commands": [
+                "TAG=$(curl -Ls -o /dev/null -w %{url_effective} https://github.com/ClementTsang/bottom/releases/latest | awk -F/ '{print $NF}') && curl -fsSLo /tmp/bottom.deb \"https://github.com/ClementTsang/bottom/releases/download/${TAG}/bottom_${TAG#v}_amd64.deb\" && (dpkg -i /tmp/bottom.deb || apt-get install -f -y) && rm -f /tmp/bottom.deb"
+              ]
+            }
+          }
+        },
+        {
+          "id": "dust",
+          "name": "dust",
+          "description": "Intuitive disk usage (du alternative)",
+          "default": false,
+          "platforms": {
+            "linux": {
+              "method": "custom",
+              "check": "command -v dust",
+              "commands": [
+                "TAG=$(curl -Ls -o /dev/null -w %{url_effective} https://github.com/bootandy/dust/releases/latest | awk -F/ '{print $NF}') && curl -fsSL \"https://github.com/bootandy/dust/releases/download/${TAG}/dust-${TAG}-x86_64-unknown-linux-musl.tar.gz\" | tar xzf - -C /tmp && install /tmp/dust-*/dust /usr/local/bin/ && rm -rf /tmp/dust-*"
+              ]
+            }
+          }
+        },
+        {
+          "id": "duf",
+          "name": "duf",
+          "description": "Disk usage viewer (df alternative)",
+          "default": false,
+          "platforms": {
+            "linux": {
+              "method": "apt",
+              "packages": [
+                "duf"
+              ],
+              "check": "command -v duf"
+            }
+          }
+        },
+        {
+          "id": "hyperfine",
+          "name": "hyperfine",
+          "description": "Command benchmarking tool",
+          "default": false,
+          "platforms": {
+            "linux": {
+              "method": "custom",
+              "check": "command -v hyperfine",
+              "commands": [
+                "TAG=$(curl -Ls -o /dev/null -w %{url_effective} https://github.com/sharkdp/hyperfine/releases/latest | awk -F/ '{print $NF}') && curl -fsSLo /tmp/hyperfine.deb \"https://github.com/sharkdp/hyperfine/releases/download/${TAG}/hyperfine_${TAG#v}_amd64.deb\" && (dpkg -i /tmp/hyperfine.deb || apt-get install -f -y) && rm -f /tmp/hyperfine.deb"
+              ]
+            }
+          }
+        },
+        {
+          "id": "tokei",
+          "name": "tokei",
+          "description": "Code statistics (lines of code)",
+          "default": false,
+          "platforms": {
+            "linux": {
+              "method": "apt",
+              "packages": [
+                "tokei"
+              ],
+              "check": "command -v tokei"
+            }
+          }
+        },
+        {
+          "id": "yazi",
+          "name": "yazi",
+          "description": "Blazing fast terminal file manager",
+          "default": true,
+          "platforms": {
+            "linux": {
+              "method": "custom",
+              "check": "command -v yazi",
+              "commands": [
+                "TAG=$(curl -Ls -o /dev/null -w %{url_effective} https://github.com/sxyazi/yazi/releases/latest | awk -F/ '{print $NF}') && curl -fsSLo /tmp/yazi.zip \"https://github.com/sxyazi/yazi/releases/download/${TAG}/yazi-x86_64-unknown-linux-gnu.zip\" && unzip -qo /tmp/yazi.zip -d /tmp && install /tmp/yazi-*/yazi /usr/local/bin/ && install /tmp/yazi-*/ya /usr/local/bin/ && rm -rf /tmp/yazi*"
+              ]
+            }
+          }
+        },
+        {
+          "id": "zoxide",
+          "name": "zoxide",
+          "description": "Smarter cd that learns your habits",
+          "default": true,
+          "platforms": {
+            "linux": {
+              "method": "custom",
+              "check": "command -v zoxide",
+              "commands": [
+                "TAG=$(curl -Ls -o /dev/null -w %{url_effective} https://github.com/ajeetdsouza/zoxide/releases/latest | awk -F/ '{print $NF}') && curl -fsSLo /tmp/zoxide.tar.gz \"https://github.com/ajeetdsouza/zoxide/releases/download/${TAG}/zoxide-${TAG#v}-x86_64-unknown-linux-musl.tar.gz\" && tar xzf /tmp/zoxide.tar.gz -C /tmp zoxide && install /tmp/zoxide /usr/local/bin/ && rm -f /tmp/zoxide*"
+              ]
+            }
+          }
+        },
+        {
+          "id": "eza",
+          "name": "eza",
+          "description": "Modern ls replacement with icons and git",
+          "default": true,
+          "platforms": {
+            "linux": {
+              "method": "apt",
+              "packages": [
+                "eza"
+              ],
+              "check": "command -v eza"
+            }
+          }
+        },
+        {
+          "id": "mise",
+          "name": "mise",
+          "description": "Universal runtime manager (replaces nvm/pyenv)",
+          "default": true,
+          "platforms": {
+            "linux": {
+              "method": "custom",
+              "check": "command -v mise",
+              "commands": [
+                "curl -fsSL https://mise.run | sh"
+              ]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,385 @@
+{
+  "id": "base_utils",
+  "name": "Base Utilities",
+  "description": "Network tools, archivers, core environment",
+  "subcategories": [
+    {
+      "id": "network",
+      "name": "Networking",
+      "packages": [
+        {
+          "id": "curl",
+          "name": "curl",
+          "description": "HTTP client",
+          "default": true,
+          "platforms": {
+            "linux":   { "method": "apt", "packages": ["curl"], "check": "command -v curl" },
+            "windows": { "method": "builtin", "note": "built into Windows 10+" }
+          }
+        },
+        {
+          "id": "wget",
+          "name": "wget",
+          "description": "File downloader",
+          "default": true,
+          "platforms": {
+            "linux":   { "method": "apt", "packages": ["wget"], "check": "command -v wget" },
+            "windows": { "method": "winget", "id": "JernejSimoncic.Wget" }
+          }
+        },
+        {
+          "id": "net-tools",
+          "name": "net-tools",
+          "description": "ifconfig, netstat, route",
+          "default": true,
+          "platforms": {
+            "linux": { "method": "apt", "packages": ["net-tools"], "check": "command -v ifconfig" }
+          }
+        },
+        {
+          "id": "dnsutils",
+          "name": "dnsutils",
+          "description": "dig, nslookup",
+          "default": true,
+          "platforms": {
+            "linux": { "method": "apt", "packages": ["dnsutils"], "check": "command -v dig" }
+          }
+        },
+        {
+          "id": "nmap",
+          "name": "nmap",
+          "description": "Port scanner",
+          "default": false,
+          "platforms": {
+            "linux":   { "method": "apt", "packages": ["nmap"], "check": "command -v nmap" },
+            "windows": { "method": "winget", "id": "Insecure.Nmap" }
+          }
+        },
+        {
+          "id": "netcat",
+          "name": "netcat",
+          "description": "Network swiss army knife",
+          "default": true,
+          "platforms": {
+            "linux": { "method": "apt", "packages": ["netcat-openbsd"], "check": "command -v nc" }
+          }
+        },
+        {
+          "id": "socat",
+          "name": "socat",
+          "description": "Multipurpose network relay",
+          "default": false,
+          "platforms": {
+            "linux": { "method": "apt", "packages": ["socat"], "check": "command -v socat" }
+          }
+        },
+        {
+          "id": "ssh",
+          "name": "OpenSSH",
+          "description": "SSH client and server",
+          "default": true,
+          "platforms": {
+            "linux":   { "method": "apt", "packages": ["openssh-client", "openssh-server"], "check": "command -v ssh" },
+            "windows": { "method": "builtin", "note": "built into Windows 10+" }
+          }
+        },
+        {
+          "id": "mtr",
+          "name": "mtr",
+          "description": "Traceroute + ping combined",
+          "default": false,
+          "platforms": {
+            "linux": { "method": "apt", "packages": ["mtr-tiny"], "check": "command -v mtr" }
+          }
+        },
+        {
+          "id": "aria2",
+          "name": "aria2",
+          "description": "Multi-threaded downloader",
+          "default": false,
+          "platforms": {
+            "linux":   { "method": "apt", "packages": ["aria2"], "check": "command -v aria2c" },
+            "windows": { "method": "winget", "id": "aria2.aria2" }
+          }
+        },
+        {
+          "id": "iproute2",
+          "name": "iproute2",
+          "description": "ip, ss and other network tools",
+          "default": true,
+          "platforms": {
+            "linux": { "method": "apt", "packages": ["iproute2"], "check": "command -v ip" }
+          }
+        },
+        {
+          "id": "traceroute",
+          "name": "traceroute",
+          "description": "Trace packet route to host",
+          "default": false,
+          "platforms": {
+            "linux": { "method": "apt", "packages": ["traceroute"], "check": "command -v traceroute" }
+          }
+        },
+        {
+          "id": "iperf3",
+          "name": "iperf3",
+          "description": "Network bandwidth testing",
+          "default": false,
+          "platforms": {
+            "linux":   { "method": "apt", "packages": ["iperf3"], "check": "command -v iperf3" },
+            "windows": { "method": "winget", "id": "ESnet.iperf3" }
+          }
+        },
+        {
+          "id": "httpie",
+          "name": "httpie",
+          "description": "User-friendly HTTP client",
+          "default": false,
+          "platforms": {
+            "linux":   { "method": "apt", "packages": ["httpie"], "check": "command -v http" },
+            "windows": { "method": "pip", "packages": ["httpie"], "check": "where http >NUL 2>&1" }
+          }
+        }
+      ]
+    },
+    {
+      "id": "archivers",
+      "name": "Archivers",
+      "packages": [
+        {
+          "id": "p7zip",
+          "name": "7-Zip",
+          "description": "7z, zip, rar and more",
+          "default": true,
+          "platforms": {
+            "linux":   { "method": "apt", "packages": ["p7zip-full"], "check": "command -v 7z" },
+            "windows": { "method": "winget", "id": "7zip.7zip" }
+          }
+        },
+        {
+          "id": "unrar",
+          "name": "unrar",
+          "description": "Extract RAR archives",
+          "default": true,
+          "platforms": {
+            "linux": { "method": "apt", "packages": ["unrar"], "check": "command -v unrar" }
+          }
+        },
+        {
+          "id": "zip",
+          "name": "zip/unzip",
+          "description": "ZIP archive tools",
+          "default": true,
+          "platforms": {
+            "linux": { "method": "apt", "packages": ["zip", "unzip"], "check": "command -v unzip" }
+          }
+        },
+        {
+          "id": "xz",
+          "name": "xz-utils",
+          "description": "XZ compression",
+          "default": true,
+          "platforms": {
+            "linux": { "method": "apt", "packages": ["xz-utils"], "check": "command -v xz" }
+          }
+        },
+        {
+          "id": "zstd",
+          "name": "zstd",
+          "description": "Zstandard compression",
+          "default": false,
+          "platforms": {
+            "linux":   { "method": "apt", "packages": ["zstd"], "check": "command -v zstd" },
+            "windows": { "method": "winget", "id": "Facebook.zstd" }
+          }
+        },
+        {
+          "id": "bzip2",
+          "name": "bzip2",
+          "description": "BZip2 compression",
+          "default": true,
+          "platforms": {
+            "linux": { "method": "apt", "packages": ["bzip2"], "check": "command -v bzip2" }
+          }
+        },
+        {
+          "id": "cabextract",
+          "name": "cabextract",
+          "description": "Microsoft CAB extractor",
+          "default": false,
+          "platforms": {
+            "linux": { "method": "apt", "packages": ["cabextract"], "check": "command -v cabextract" }
+          }
+        }
+      ]
+    },
+    {
+      "id": "base_env",
+      "name": "Core Environment",
+      "packages": [
+        {
+          "id": "git",
+          "name": "git",
+          "description": "Version control system",
+          "default": true,
+          "platforms": {
+            "linux":   { "method": "apt", "packages": ["git"], "check": "command -v git" },
+            "windows": { "method": "winget", "id": "Git.Git" }
+          }
+        },
+        {
+          "id": "build-essential",
+          "name": "build-essential",
+          "description": "GCC, G++, make",
+          "default": true,
+          "platforms": {
+            "linux": { "method": "apt", "packages": ["build-essential"], "check": "command -v gcc && command -v make" }
+          }
+        },
+        {
+          "id": "htop",
+          "name": "htop",
+          "description": "Interactive process monitor",
+          "default": true,
+          "platforms": {
+            "linux": { "method": "apt", "packages": ["htop"], "check": "command -v htop" }
+          }
+        },
+        {
+          "id": "btop",
+          "name": "btop",
+          "description": "Resource monitor with graphs",
+          "default": false,
+          "platforms": {
+            "linux": { "method": "apt", "packages": ["btop"], "check": "command -v btop" }
+          }
+        },
+        {
+          "id": "tmux",
+          "name": "tmux",
+          "description": "Terminal multiplexer",
+          "default": true,
+          "platforms": {
+            "linux": { "method": "apt", "packages": ["tmux"], "check": "command -v tmux" }
+          }
+        },
+        {
+          "id": "jq",
+          "name": "jq",
+          "description": "JSON processor",
+          "default": true,
+          "platforms": {
+            "linux":   { "method": "apt", "packages": ["jq"], "check": "command -v jq" },
+            "windows": { "method": "winget", "id": "jqlang.jq" }
+          }
+        },
+        {
+          "id": "tree",
+          "name": "tree",
+          "description": "Directory tree listing",
+          "default": true,
+          "platforms": {
+            "linux": { "method": "apt", "packages": ["tree"], "check": "command -v tree" }
+          }
+        },
+        {
+          "id": "file",
+          "name": "file",
+          "description": "File type detection",
+          "default": true,
+          "platforms": {
+            "linux": { "method": "apt", "packages": ["file"], "check": "command -v file" }
+          }
+        },
+        {
+          "id": "rsync",
+          "name": "rsync",
+          "description": "Fast file synchronization",
+          "default": true,
+          "platforms": {
+            "linux": { "method": "apt", "packages": ["rsync"], "check": "command -v rsync" }
+          }
+        },
+        {
+          "id": "screen",
+          "name": "screen",
+          "description": "Terminal multiplexer (classic)",
+          "default": false,
+          "platforms": {
+            "linux": { "method": "apt", "packages": ["screen"], "check": "command -v screen" }
+          }
+        },
+        {
+          "id": "pkg-config",
+          "name": "pkg-config",
+          "description": "Library metadata helper",
+          "default": true,
+          "platforms": {
+            "linux": { "method": "apt", "packages": ["pkg-config"], "check": "command -v pkg-config" }
+          }
+        },
+        {
+          "id": "yq",
+          "name": "yq",
+          "description": "YAML processor (like jq for YAML)",
+          "default": false,
+          "platforms": {
+            "linux": {
+              "method": "custom",
+              "check": "command -v yq",
+              "commands": [
+                "curl -fsSLo /usr/local/bin/yq https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64 && chmod +x /usr/local/bin/yq"
+              ]
+            },
+            "windows": { "method": "winget", "id": "MikeFarah.yq" }
+          }
+        },
+        {
+          "id": "strace",
+          "name": "strace",
+          "description": "System call tracer",
+          "default": false,
+          "platforms": {
+            "linux": { "method": "apt", "packages": ["strace"], "check": "command -v strace" }
+          }
+        },
+        {
+          "id": "lsof",
+          "name": "lsof",
+          "description": "List open files",
+          "default": true,
+          "platforms": {
+            "linux": { "method": "apt", "packages": ["lsof"], "check": "command -v lsof" }
+          }
+        },
+        {
+          "id": "xxd",
+          "name": "xxd",
+          "description": "Hex dump tool",
+          "default": false,
+          "platforms": {
+            "linux": { "method": "apt", "packages": ["xxd"], "check": "command -v xxd" }
+          }
+        },
+        {
+          "id": "dos2unix",
+          "name": "dos2unix",
+          "description": "Line ending converter",
+          "default": false,
+          "platforms": {
+            "linux": { "method": "apt", "packages": ["dos2unix"], "check": "command -v dos2unix" }
+          }
+        },
+        {
+          "id": "xclip",
+          "name": "xclip",
+          "description": "Clipboard access (X11)",
+          "default": false,
+          "platforms": {
+            "linux": { "method": "apt", "packages": ["xclip"], "check": "command -v xclip" }
+          }
+        }
+      ]
+    }
+  ]
+}

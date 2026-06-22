@@ -1,0 +1,197 @@
+{
+  "id": "extras",
+  "name": "Extras",
+  "description": "Browsers, system optimization, containers, desktop apps",
+  "subcategories": [
+    {
+      "id": "browsers",
+      "name": "Browsers",
+      "packages": [
+        {
+          "id": "firefox",
+          "name": "firefox",
+          "description": "Mozilla Firefox browser",
+          "default": false,
+          "platforms": {
+            "linux": {
+              "method": "custom",
+              "check": "command -v firefox || command -v firefox-esr",
+              "commands": ["apt-get install -y firefox 2>/dev/null || apt-get install -y firefox-esr"]
+            },
+            "windows": { "method": "winget", "id": "Mozilla.Firefox" }
+          }
+        },
+        {
+          "id": "chromium",
+          "name": "chromium",
+          "description": "Open-source Chrome browser",
+          "default": false,
+          "platforms": {
+            "linux":   { "method": "apt", "packages": ["chromium"], "check": "command -v chromium" },
+            "windows": { "method": "winget", "id": "Google.Chrome" }
+          }
+        }
+      ]
+    },
+    {
+      "id": "containers",
+      "name": "Containers",
+      "packages": [
+        {
+          "id": "docker",
+          "name": "docker",
+          "description": "Container runtime",
+          "default": false,
+          "platforms": {
+            "linux": {
+              "method": "custom",
+              "check": "command -v docker",
+              "commands": ["curl -fsSL https://get.docker.com | sh"]
+            },
+            "windows": { "method": "winget", "id": "Docker.DockerDesktop" }
+          }
+        },
+        {
+          "id": "docker-compose",
+          "name": "docker-compose",
+          "description": "Multi-container orchestration",
+          "default": false,
+          "platforms": {
+            "linux": { "method": "apt", "packages": ["docker-compose-plugin"], "check": "docker compose version >/dev/null 2>&1" }
+          }
+        }
+      ]
+    },
+    {
+      "id": "db",
+      "name": "Database Tools",
+      "packages": [
+        {
+          "id": "sqlite3",
+          "name": "sqlite3",
+          "description": "SQLite CLI",
+          "default": true,
+          "platforms": {
+            "linux": { "method": "apt", "packages": ["sqlite3"], "check": "command -v sqlite3" }
+          }
+        },
+        {
+  "id": "dbeaver",
+  "name": "dbeaver",
+  "description": "Universal database GUI",
+  "default": false,
+  "platforms": {
+    "linux": {
+      "method": "custom",
+      "check": "command -v dbeaver",
+      "commands": [
+        "set -e && curl -fsSLo /tmp/dbeaver.deb https://dbeaver.io/files/dbeaver-ce_latest_amd64.deb && (dpkg -i /tmp/dbeaver.deb || apt-get install -f -y) && rm -f /tmp/dbeaver.deb"
+      ]
+    }
+  }
+},
+    {
+      "id": "apps",
+      "name": "Desktop Apps",
+      "packages": [
+        {
+          "id": "keepassxc",
+          "name": "keepassxc",
+          "description": "Password manager",
+          "default": false,
+          "platforms": {
+            "linux":   { "method": "apt", "packages": ["keepassxc"], "check": "command -v keepassxc" },
+            "windows": { "method": "winget", "id": "KeePassXCTeam.KeePassXC" }
+          }
+        },
+        {
+          "id": "vlc",
+          "name": "vlc",
+          "description": "Media player",
+          "default": false,
+          "platforms": {
+            "linux":   { "method": "apt", "packages": ["vlc"], "check": "command -v vlc" },
+            "windows": { "method": "winget", "id": "VideoLAN.VLC" }
+          }
+        },
+        {
+          "id": "flameshot",
+          "name": "flameshot",
+          "description": "Screenshot tool",
+          "default": false,
+          "platforms": {
+            "linux":   { "method": "apt", "packages": ["flameshot"], "check": "command -v flameshot" },
+            "windows": { "method": "winget", "id": "Flameshot.Flameshot" }
+          }
+        }
+      ]
+    },
+    {
+      "id": "win_optimize",
+      "name": "Windows Optimization",
+      "packages": [
+        {
+          "id": "powertoys",
+          "name": "PowerToys",
+          "description": "Microsoft power-user utilities",
+          "default": true,
+          "platforms": {
+            "windows": { "method": "winget", "id": "Microsoft.PowerToys" }
+          }
+        },
+        {
+          "id": "win-terminal",
+          "name": "Windows Terminal",
+          "description": "Modern terminal for Windows",
+          "default": true,
+          "platforms": {
+            "windows": { "method": "winget", "id": "Microsoft.WindowsTerminal" }
+          }
+        }
+      ]
+    },
+    {
+      "id": "terminal_apps",
+      "name": "Terminal Emulators",
+      "packages": [
+        {
+          "id": "warp",
+          "name": "warp",
+          "description": "Modern terminal with AI",
+          "default": false,
+          "platforms": {
+            "linux": {
+              "method": "custom",
+              "check": "command -v warp-terminal || command -v warp",
+              "commands": [
+                "set -e && curl -fsSL https://app.warp.dev/download -o /tmp/warp.deb && (dpkg -i /tmp/warp.deb || apt-get install -f -y) && rm -f /tmp/warp.deb"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "containers",
+      "name": "Containers",
+      "packages": [
+        {
+          "id": "distrobox",
+          "name": "distrobox",
+          "description": "Run any Linux distro in a container",
+          "default": true,
+          "platforms": {
+            "linux": {
+              "method": "custom",
+              "check": "command -v distrobox",
+              "commands": [
+                "curl -s https://raw.githubusercontent.com/89luca89/distrobox/main/install | sh -s -- --prefix /usr/local"
+              ]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
+
