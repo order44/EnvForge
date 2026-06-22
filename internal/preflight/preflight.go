@@ -252,6 +252,29 @@ func scanOne(ctx context.Context, key string, pkg manifest.Package, plat manifes
 		cancel()
 	}
 
+	if !st.Installed {
+		switch plat.Method {
+		case "vscode_ext":
+			checkCtx, cancel := context.WithTimeout(ctx, 8*time.Second)
+			st.Installed = executor.VSCodeExtensionInstalled(checkCtx, plat.ID)
+			cancel()
+		case "pipx":
+			if len(plat.Packages) > 0 {
+				installed := true
+				for _, spec := range plat.Packages {
+					checkCtx, cancel := context.WithTimeout(ctx, 8*time.Second)
+					ok := executor.PipxPackageInstalled(checkCtx, spec)
+					cancel()
+					if !ok {
+						installed = false
+						break
+					}
+				}
+				st.Installed = installed
+			}
+		}
+	}
+
 	sizeKB, known := EstimatePackageSizeKB(ctx, pkg, plat)
 	if known {
 		st.SizeKB = sizeKB

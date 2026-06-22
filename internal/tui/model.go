@@ -646,7 +646,7 @@ func (m *Model) viewInstalling() string {
 		b.WriteString("\n")
 	}
 	b.WriteString(helpStyle.Render(" [ctrl+c] cancel"))
-	return b.String()
+	return m.padToHeight(b.String())
 }
 
 // ---------------------------------------------------------------------------
@@ -862,6 +862,17 @@ func (m *Model) preflightLine() string {
 func (m *Model) setBanner(text string) {
 	m.banner = text
 	m.bannerExp = time.Now().Add(4 * time.Second)
+}
+
+func (m *Model) padToHeight(s string) string {
+	if m.height <= 0 {
+		return s
+	}
+	lineCount := strings.Count(s, "\n") + 1
+	if lineCount >= m.height {
+		return s
+	}
+	return s + strings.Repeat("\n", m.height-lineCount)
 }
 
 func formatResult(r installer.InstallResult) string {

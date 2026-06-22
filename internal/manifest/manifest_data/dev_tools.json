@@ -100,14 +100,11 @@
               "packages": [
                 "tldr"
               ],
-              "check": "command -v tldr"
+              "check": "command -v tldr || npm list -g --depth=0 tldr >/dev/null 2>&1"
             },
             "windows": {
-              "method": "npm",
-              "packages": [
-                "tldr"
-              ],
-              "check": "where tldr &gt;NUL 2&gt;&amp;1"
+              "method": "winget",
+              "id": "tldr-pages.tlrc"
             }
           }
         },
@@ -121,8 +118,9 @@
               "method": "custom",
               "check": "command -v lazygit",
               "commands": [
-                "TAG=$(curl -Ls -o /dev/null -w %{url_effective} https://github.com/jesseduffield/lazygit/releases/latest | awk -F/ '{print $NF}') && curl -fsSLo /tmp/lazygit.tar.gz \"https://github.com/jesseduffield/lazygit/releases/download/${TAG}/lazygit_${TAG#v}_Linux_x86_64.tar.gz\" && tar xf /tmp/lazygit.tar.gz -C /tmp lazygit && install /tmp/lazygit /usr/local/bin/ && rm -f /tmp/lazygit /tmp/lazygit.tar.gz"
-              ]
+                "set -e && LAZYGIT_VERSION=$(curl -s \"https://api.github.com/repos/jesseduffield/lazygit/releases/latest\" | grep -Po '\"tag_name\": *\"v\\K[^\"]*') && LAZYGIT_ARCH=$(uname -m | sed -e 's/x86_64/x86_64/' -e 's/aarch64/arm64/' -e 's/arm64/arm64/') && curl -Lo /tmp/lazygit.tar.gz \"https://github.com/jesseduffield/lazygit/releases/download/v${LAZYGIT_VERSION}/lazygit_${LAZYGIT_VERSION}_Linux_${LAZYGIT_ARCH}.tar.gz\" && tar xf /tmp/lazygit.tar.gz -C /tmp lazygit && install -m 755 /tmp/lazygit /usr/local/bin/lazygit && rm -f /tmp/lazygit /tmp/lazygit.tar.gz"
+              ],
+              "size_kb": 25000
             },
             "windows": {
               "method": "winget",
@@ -140,8 +138,9 @@
               "method": "custom",
               "check": "command -v delta",
               "commands": [
-                "TAG=$(curl -Ls -o /dev/null -w %{url_effective} https://github.com/dandavison/delta/releases/latest | awk -F/ '{print $NF}') && curl -fsSLo /tmp/delta.deb \"https://github.com/dandavison/delta/releases/download/${TAG}/git-delta_${TAG}_amd64.deb\" && (dpkg -i /tmp/delta.deb || apt-get install -f -y) && rm -f /tmp/delta.deb"
-              ]
+                "set -e && TAG=$(curl -s https://api.github.com/repos/dandavison/delta/releases/latest | grep -oP '\"tag_name\": \"\\K[^\"]*') && ARCH=$(dpkg --print-architecture) && curl -fsSLo /tmp/delta.deb \"https://github.com/dandavison/delta/releases/download/${TAG}/git-delta_${TAG#v}_${ARCH}.deb\" && (dpkg -i /tmp/delta.deb || apt-get install -f -y) && rm -f /tmp/delta.deb"
+              ],
+              "size_kb": 18000
             }
           }
         },
@@ -149,14 +148,15 @@
           "id": "lazydocker",
           "name": "lazydocker",
           "description": "TUI for Docker management",
-          "default": true,
+          "default": false,
           "platforms": {
             "linux": {
               "method": "custom",
               "check": "command -v lazydocker",
               "commands": [
-                "GOBIN=/usr/local/bin /usr/local/go/bin/go install github.com/jesseduffield/lazydocker@latest 2>/dev/null || echo 'install go first'"
-              ]
+                "set -e && curl -fsSL https://raw.githubusercontent.com/jesseduffield/lazydocker/master/scripts/install_update_linux.sh | bash && install -m 755 \"$HOME/.local/bin/lazydocker\" /usr/local/bin/lazydocker"
+              ],
+              "size_kb": 18000
             }
           }
         },
@@ -170,8 +170,9 @@
               "method": "custom",
               "check": "command -v btm",
               "commands": [
-                "TAG=$(curl -Ls -o /dev/null -w %{url_effective} https://github.com/ClementTsang/bottom/releases/latest | awk -F/ '{print $NF}') && curl -fsSLo /tmp/bottom.deb \"https://github.com/ClementTsang/bottom/releases/download/${TAG}/bottom_${TAG#v}_amd64.deb\" && (dpkg -i /tmp/bottom.deb || apt-get install -f -y) && rm -f /tmp/bottom.deb"
-              ]
+                "set -e && TAG=$(curl -Ls -o /dev/null -w %{url_effective} https://github.com/ClementTsang/bottom/releases/latest | awk -F/ '{print $NF}') && ARCH=$(dpkg --print-architecture) && curl -fsSLo /tmp/bottom.deb \"https://github.com/ClementTsang/bottom/releases/download/${TAG}/bottom_${TAG#v}_${ARCH}.deb\" && (dpkg -i /tmp/bottom.deb || apt-get install -f -y) && rm -f /tmp/bottom.deb"
+              ],
+              "size_kb": 12000
             }
           }
         },
@@ -185,8 +186,9 @@
               "method": "custom",
               "check": "command -v dust",
               "commands": [
-                "TAG=$(curl -Ls -o /dev/null -w %{url_effective} https://github.com/bootandy/dust/releases/latest | awk -F/ '{print $NF}') && curl -fsSL \"https://github.com/bootandy/dust/releases/download/${TAG}/dust-${TAG}-x86_64-unknown-linux-musl.tar.gz\" | tar xzf - -C /tmp && install /tmp/dust-*/dust /usr/local/bin/ && rm -rf /tmp/dust-*"
-              ]
+                "set -e && TAG=$(curl -Ls -o /dev/null -w %{url_effective} https://github.com/bootandy/dust/releases/latest | awk -F/ '{print $NF}') && ARCH=$(uname -m | sed -e 's/x86_64/x86_64/' -e 's/aarch64/aarch64/' -e 's/arm64/aarch64/') && curl -fsSL \"https://github.com/bootandy/dust/releases/download/${TAG}/dust-${TAG}-${ARCH}-unknown-linux-musl.tar.gz\" | tar xzf - -C /tmp && install -m 755 /tmp/dust-*/dust /usr/local/bin/dust && rm -rf /tmp/dust-*"
+              ],
+              "size_kb": 7000
             }
           }
         },
@@ -215,8 +217,9 @@
               "method": "custom",
               "check": "command -v hyperfine",
               "commands": [
-                "TAG=$(curl -Ls -o /dev/null -w %{url_effective} https://github.com/sharkdp/hyperfine/releases/latest | awk -F/ '{print $NF}') && curl -fsSLo /tmp/hyperfine.deb \"https://github.com/sharkdp/hyperfine/releases/download/${TAG}/hyperfine_${TAG#v}_amd64.deb\" && (dpkg -i /tmp/hyperfine.deb || apt-get install -f -y) && rm -f /tmp/hyperfine.deb"
-              ]
+                "set -e && TAG=$(curl -Ls -o /dev/null -w %{url_effective} https://github.com/sharkdp/hyperfine/releases/latest | awk -F/ '{print $NF}') && ARCH=$(dpkg --print-architecture) && curl -fsSLo /tmp/hyperfine.deb \"https://github.com/sharkdp/hyperfine/releases/download/${TAG}/hyperfine_${TAG#v}_${ARCH}.deb\" && (dpkg -i /tmp/hyperfine.deb || apt-get install -f -y) && rm -f /tmp/hyperfine.deb"
+              ],
+              "size_kb": 6000
             }
           }
         },
@@ -243,10 +246,11 @@
           "platforms": {
             "linux": {
               "method": "custom",
-              "check": "command -v yazi",
+              "check": "command -v yazi && command -v ya",
               "commands": [
-                "TAG=$(curl -Ls -o /dev/null -w %{url_effective} https://github.com/sxyazi/yazi/releases/latest | awk -F/ '{print $NF}') && curl -fsSLo /tmp/yazi.zip \"https://github.com/sxyazi/yazi/releases/download/${TAG}/yazi-x86_64-unknown-linux-gnu.zip\" && unzip -qo /tmp/yazi.zip -d /tmp && install /tmp/yazi-*/yazi /usr/local/bin/ && install /tmp/yazi-*/ya /usr/local/bin/ && rm -rf /tmp/yazi*"
-              ]
+                "set -e && TAG=$(curl -Ls -o /dev/null -w %{url_effective} https://github.com/sxyazi/yazi/releases/latest | awk -F/ '{print $NF}') && ARCH=$(uname -m | sed -e 's/x86_64/x86_64/' -e 's/aarch64/aarch64/' -e 's/arm64/aarch64/') && curl -fsSLo /tmp/yazi.zip \"https://github.com/sxyazi/yazi/releases/download/${TAG}/yazi-${ARCH}-unknown-linux-gnu.zip\" && unzip -qo /tmp/yazi.zip -d /tmp && install -m 755 /tmp/yazi-*/yazi /usr/local/bin/yazi && install -m 755 /tmp/yazi-*/ya /usr/local/bin/ya && rm -rf /tmp/yazi*"
+              ],
+              "size_kb": 15000
             }
           }
         },
@@ -260,8 +264,9 @@
               "method": "custom",
               "check": "command -v zoxide",
               "commands": [
-                "TAG=$(curl -Ls -o /dev/null -w %{url_effective} https://github.com/ajeetdsouza/zoxide/releases/latest | awk -F/ '{print $NF}') && curl -fsSLo /tmp/zoxide.tar.gz \"https://github.com/ajeetdsouza/zoxide/releases/download/${TAG}/zoxide-${TAG#v}-x86_64-unknown-linux-musl.tar.gz\" && tar xzf /tmp/zoxide.tar.gz -C /tmp zoxide && install /tmp/zoxide /usr/local/bin/ && rm -f /tmp/zoxide*"
-              ]
+                "set -e && TAG=$(curl -Ls -o /dev/null -w %{url_effective} https://github.com/ajeetdsouza/zoxide/releases/latest | awk -F/ '{print $NF}') && ARCH=$(uname -m | sed -e 's/x86_64/x86_64/' -e 's/aarch64/aarch64/' -e 's/arm64/aarch64/') && curl -fsSLo /tmp/zoxide.tar.gz \"https://github.com/ajeetdsouza/zoxide/releases/download/${TAG}/zoxide-${TAG#v}-${ARCH}-unknown-linux-musl.tar.gz\" && tar xzf /tmp/zoxide.tar.gz -C /tmp zoxide && install -m 755 /tmp/zoxide /usr/local/bin/zoxide && rm -f /tmp/zoxide /tmp/zoxide.tar.gz"
+              ],
+              "size_kb": 5000
             }
           }
         },
@@ -272,11 +277,12 @@
           "default": true,
           "platforms": {
             "linux": {
-              "method": "apt",
-              "packages": [
-                "eza"
+              "method": "custom",
+              "check": "command -v eza",
+              "commands": [
+                "set -e && apt-get install -y gpg wget && mkdir -p /etc/apt/keyrings && wget -qO- https://raw.githubusercontent.com/eza-community/eza/main/deb.asc | gpg --dearmor -o /etc/apt/keyrings/gierens.gpg && echo \"deb [signed-by=/etc/apt/keyrings/gierens.gpg] http://deb.gierens.de stable main\" > /etc/apt/sources.list.d/gierens.list && chmod 644 /etc/apt/keyrings/gierens.gpg /etc/apt/sources.list.d/gierens.list && apt-get update && apt-get install -y eza"
               ],
-              "check": "command -v eza"
+              "size_kb": 15000
             }
           }
         },
@@ -290,8 +296,9 @@
               "method": "custom",
               "check": "command -v mise",
               "commands": [
-                "curl -fsSL https://mise.run | sh"
-              ]
+                "set -e && curl https://mise.run | env MISE_INSTALL_PATH=/usr/local/bin/mise INSTALLER_NO_MODIFY_PATH=1 sh"
+              ],
+              "size_kb": 25000
             }
           }
         }

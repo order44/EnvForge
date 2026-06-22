@@ -89,10 +89,11 @@
           "platforms": {
             "linux": {
               "method": "custom",
-              "check": "command -v obsidian",
+              "check": "command -v obsidian || dpkg -s obsidian >/dev/null 2>&1",
               "commands": [
                 "set -e && OBS_URL=$(curl -fsSL https://api.github.com/repos/obsidianmd/obsidian-releases/releases/latest | grep -oP '\"browser_download_url\":\\s*\"\\K[^\"]*amd64\\.deb' | head -1) && curl -fsSLo /tmp/obsidian.deb \"$OBS_URL\" && (dpkg -i /tmp/obsidian.deb || apt-get install -f -y) && rm -f /tmp/obsidian.deb"
-              ]
+              ],
+              "size_kb": 180000
             },
             "windows": {
               "method": "winget",
@@ -110,12 +111,13 @@
               "method": "custom",
               "check": "command -v marktext",
               "commands": [
-                "curl -fsSLo /tmp/marktext.deb \"https://github.com/marktext/marktext/releases/download/v0.16.3/marktext-amd64.deb\" && (dpkg -i /tmp/marktext.deb || apt-get install -f -y) && rm -f /tmp/marktext.deb"
-              ]
+                "set -e && ARCH=$(dpkg --print-architecture) && if [ \"$ARCH\" != \"amd64\" ]; then echo \"MarkText upstream ships only amd64 .deb\" >&2; exit 1; fi && curl -fsSLo /tmp/marktext.deb https://github.com/marktext/marktext/releases/latest/download/marktext-amd64.deb && apt-get install -y /tmp/marktext.deb && rm -f /tmp/marktext.deb"
+              ],
+              "size_kb": 77000
             },
             "windows": {
               "method": "winget",
-              "id": "marktext.marktext"
+              "id": "MarkText.MarkText"
             }
           }
         }

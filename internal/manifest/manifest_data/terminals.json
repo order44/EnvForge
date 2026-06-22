@@ -30,10 +30,11 @@
           "platforms": {
             "linux": {
               "method": "custom",
-              "check": "test -d ${ZSH:-$HOME/.oh-my-zsh}",
+              "check": "REAL_HOME=$(getent passwd ${SUDO_USER:-$USER} | cut -d: -f6); test -d \"${ZSH:-$REAL_HOME/.oh-my-zsh}\"",
               "commands": [
-                "RUNZSH=no CHSH=no sh -c \"$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)\" \"\" --unattended"
-              ]
+                "set -e && REAL_USER=${SUDO_USER:-$USER} && su -l \"$REAL_USER\" -c 'RUNZSH=no CHSH=no sh -c \"$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)\" \"\" --unattended'"
+              ],
+              "size_kb": 15000
             }
           }
         },
@@ -62,8 +63,9 @@
               "method": "custom",
               "check": "command -v pwsh",
               "commands": [
-                "set -e && apt-get install -y wget apt-transport-https && wget -q https://packages.microsoft.com/config/debian/12/packages-microsoft-prod.deb -O /tmp/ms.deb && dpkg -i /tmp/ms.deb && apt-get update && apt-get install -y powershell && rm -f /tmp/ms.deb"
-              ]
+                "set -e && ARCH=$(dpkg --print-architecture) && URL=$(curl -fsSL https://api.github.com/repos/PowerShell/PowerShell/releases/latest | grep -oE \"https://[^\\\"]*powershell_[0-9.]+-1\\.deb_${ARCH}\\.deb\" | head -1) && [ -n \"$URL\" ] && curl -fsSLo /tmp/powershell.deb \"$URL\" && apt-get install -y /tmp/powershell.deb && rm -f /tmp/powershell.deb"
+              ],
+              "size_kb": 190000
             },
             "windows": {
               "method": "winget",
@@ -80,15 +82,16 @@
         {
           "id": "zellij",
           "name": "zellij",
-          "description": "Modern terminal multiplexer (better than tmux)",
+          "description": "Modern terminal multiplexer",
           "default": true,
           "platforms": {
             "linux": {
               "method": "custom",
               "check": "command -v zellij",
               "commands": [
-                "TAG=$(curl -Ls -o /dev/null -w %{url_effective} https://github.com/zellij-org/zellij/releases/latest | awk -F/ '{print $NF}') && curl -fsSLo /tmp/zellij.tar.gz \"https://github.com/zellij-org/zellij/releases/download/${TAG}/zellij-x86_64-unknown-linux-musl.tar.gz\" && tar xzf /tmp/zellij.tar.gz -C /tmp zellij && install /tmp/zellij /usr/local/bin/ && rm -f /tmp/zellij*"
-              ]
+                "set -e && TAG=$(curl -Ls -o /dev/null -w %{url_effective} https://github.com/zellij-org/zellij/releases/latest | awk -F/ '{print $NF}') && ARCH=$(uname -m | sed -e 's/x86_64/x86_64/' -e 's/aarch64/aarch64/' -e 's/arm64/aarch64/') && curl -fsSLo /tmp/zellij.tar.gz \"https://github.com/zellij-org/zellij/releases/download/${TAG}/zellij-${ARCH}-unknown-linux-musl.tar.gz\" && tar xzf /tmp/zellij.tar.gz -C /tmp zellij && install -m 755 /tmp/zellij /usr/local/bin/zellij && rm -f /tmp/zellij /tmp/zellij.tar.gz"
+              ],
+              "size_kb": 12000
             }
           }
         },
@@ -100,10 +103,11 @@
           "platforms": {
             "linux": {
               "method": "custom",
-              "check": "command -v yazi",
+              "check": "command -v yazi && command -v ya",
               "commands": [
-                "curl -fsSL https://yazi-rs.github.io/install.sh | bash"
-              ]
+                "set -e && TAG=$(curl -Ls -o /dev/null -w %{url_effective} https://github.com/sxyazi/yazi/releases/latest | awk -F/ '{print $NF}') && ARCH=$(uname -m | sed -e 's/x86_64/x86_64/' -e 's/aarch64/aarch64/' -e 's/arm64/aarch64/') && curl -fsSLo /tmp/yazi.zip \"https://github.com/sxyazi/yazi/releases/download/${TAG}/yazi-${ARCH}-unknown-linux-gnu.zip\" && unzip -qo /tmp/yazi.zip -d /tmp && install -m 755 /tmp/yazi-*/yazi /usr/local/bin/yazi && install -m 755 /tmp/yazi-*/ya /usr/local/bin/ya && rm -rf /tmp/yazi*"
+              ],
+              "size_kb": 15000
             }
           }
         },
@@ -117,8 +121,9 @@
               "method": "custom",
               "check": "command -v zoxide",
               "commands": [
-                "curl -fsSL https://raw.githubusercontent.com/ajeetdsouza/zoxide/main/install.sh | bash"
-              ]
+                "set -e && TAG=$(curl -Ls -o /dev/null -w %{url_effective} https://github.com/ajeetdsouza/zoxide/releases/latest | awk -F/ '{print $NF}') && ARCH=$(uname -m | sed -e 's/x86_64/x86_64/' -e 's/aarch64/aarch64/' -e 's/arm64/aarch64/') && curl -fsSLo /tmp/zoxide.tar.gz \"https://github.com/ajeetdsouza/zoxide/releases/download/${TAG}/zoxide-${TAG#v}-${ARCH}-unknown-linux-musl.tar.gz\" && tar xzf /tmp/zoxide.tar.gz -C /tmp zoxide && install -m 755 /tmp/zoxide /usr/local/bin/zoxide && rm -f /tmp/zoxide /tmp/zoxide.tar.gz"
+              ],
+              "size_kb": 5000
             }
           }
         },
@@ -129,50 +134,63 @@
           "default": true,
           "platforms": {
             "linux": {
-              "method": "apt",
-              "packages": [
-                "eza"
+              "method": "custom",
+              "check": "command -v eza",
+              "commands": [
+                "set -e && apt-get install -y gpg wget && mkdir -p /etc/apt/keyrings && wget -qO- https://raw.githubusercontent.com/eza-community/eza/main/deb.asc | gpg --dearmor -o /etc/apt/keyrings/gierens.gpg && echo \"deb [signed-by=/etc/apt/keyrings/gierens.gpg] http://deb.gierens.de stable main\" > /etc/apt/sources.list.d/gierens.list && chmod 644 /etc/apt/keyrings/gierens.gpg /etc/apt/sources.list.d/gierens.list && apt-get update && apt-get install -y eza"
               ],
-              "check": "command -v eza"
+              "size_kb": 15000
             }
           }
         },
         {
           "id": "mise",
           "name": "mise",
-          "description": "Universal runtime manager (replaces nvm, pyenv, etc.)",
+          "description": "Universal runtime manager",
           "default": true,
           "platforms": {
             "linux": {
               "method": "custom",
               "check": "command -v mise",
               "commands": [
-                "curl -fsSL https://mise.run | sh"
-              ]
+                "set -e && curl https://mise.run | env MISE_INSTALL_PATH=/usr/local/bin/mise INSTALLER_NO_MODIFY_PATH=1 sh"
+              ],
+              "size_kb": 25000
             }
           }
         }
       ]
     },
     {
-      "id": "warp",
-      "name": "Warp Terminal",
+      "id": "terminal_apps",
+      "name": "Terminal Apps",
       "packages": [
         {
           "id": "warp",
           "name": "warp",
-          "description": "Modern terminal with AI features",
+          "description": "Modern terminal with AI",
           "default": false,
           "platforms": {
             "linux": {
               "method": "custom",
-              "check": "command -v warp-terminal || command -v warp",
+              "check": "command -v warp-terminal || test -x /usr/bin/warp-terminal",
               "commands": [
-                "set -e && curl -fsSL https://app.warp.dev/download -o /tmp/warp.deb && (dpkg -i /tmp/warp.deb || apt-get install -f -y) && rm -f /tmp/warp.deb"
-              ]
+                "set -e && apt-get install -y wget gpg && wget -qO- https://releases.warp.dev/linux/keys/warp.asc | gpg --dearmor > /tmp/warpdotdev.gpg && install -D -o root -g root -m 644 /tmp/warpdotdev.gpg /etc/apt/keyrings/warpdotdev.gpg && rm -f /tmp/warpdotdev.gpg && printf 'deb [signed-by=/etc/apt/keyrings/warpdotdev.gpg] https://releases.warp.dev/linux/deb stable main\n' > /etc/apt/sources.list.d/warpdotdev.list && apt-get update && apt-get install -y warp-terminal"
+              ],
+              "size_kb": 180000
+            },
+            "windows": {
+              "method": "winget",
+              "id": "Warp.Warp"
             }
           }
-        },
+        }
+      ]
+    },
+    {
+      "id": "warp_themes",
+      "name": "Warp Themes",
+      "packages": [
         {
           "id": "warp-themes",
           "name": "warp-themes",
@@ -181,10 +199,11 @@
           "platforms": {
             "linux": {
               "method": "custom",
-              "check": "test -d ${XDG_DATA_HOME:-$HOME/.local/share}/warp-terminal/themes",
+              "check": "REAL_HOME=$(getent passwd ${SUDO_USER:-$USER} | cut -d: -f6); test -d \"${XDG_DATA_HOME:-$REAL_HOME/.local/share}/warp-terminal/themes\"",
               "commands": [
-                "mkdir -p ${XDG_DATA_HOME:-$HOME/.local/share}/warp-terminal && cd ${XDG_DATA_HOME:-$HOME/.local/share}/warp-terminal && git clone https://github.com/warpdotdev/themes.git || (cd themes && git pull)"
-              ]
+                "set -e && REAL_HOME=$(getent passwd ${SUDO_USER:-$USER} | cut -d: -f6) && DEST=\"${XDG_DATA_HOME:-$REAL_HOME/.local/share}/warp-terminal\" && mkdir -p \"$DEST\" && if [ ! -d \"$DEST/themes/.git\" ]; then git clone --depth=1 https://github.com/warpdotdev/themes.git \"$DEST/themes\"; else git -C \"$DEST/themes\" pull --ff-only; fi"
+              ],
+              "size_kb": 5000
             }
           }
         }
@@ -202,10 +221,11 @@
           "platforms": {
             "linux": {
               "method": "custom",
-              "check": "test -d ${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/plugins/zsh-autosuggestions",
+              "check": "REAL_HOME=$(getent passwd ${SUDO_USER:-$USER} | cut -d: -f6); test -d \"${ZSH_CUSTOM:-$REAL_HOME/.oh-my-zsh/custom}/plugins/zsh-autosuggestions\"",
               "commands": [
-                "ZSH_CUSTOM=${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom} && git clone --depth=1 https://github.com/zsh-users/zsh-autosuggestions $ZSH_CUSTOM/plugins/zsh-autosuggestions"
-              ]
+                "set -e && REAL_HOME=$(getent passwd ${SUDO_USER:-$USER} | cut -d: -f6) && ZSH_CUSTOM=\"${ZSH_CUSTOM:-$REAL_HOME/.oh-my-zsh/custom}\" && if [ ! -d \"$ZSH_CUSTOM/plugins/zsh-autosuggestions/.git\" ]; then git clone --depth=1 https://github.com/zsh-users/zsh-autosuggestions \"$ZSH_CUSTOM/plugins/zsh-autosuggestions\"; else git -C \"$ZSH_CUSTOM/plugins/zsh-autosuggestions\" pull --ff-only; fi"
+              ],
+              "size_kb": 3000
             }
           }
         },
@@ -217,10 +237,11 @@
           "platforms": {
             "linux": {
               "method": "custom",
-              "check": "test -d ${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/plugins/zsh-syntax-highlighting",
+              "check": "REAL_HOME=$(getent passwd ${SUDO_USER:-$USER} | cut -d: -f6); test -d \"${ZSH_CUSTOM:-$REAL_HOME/.oh-my-zsh/custom}/plugins/zsh-syntax-highlighting\"",
               "commands": [
-                "ZSH_CUSTOM=${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom} && git clone --depth=1 https://github.com/zsh-users/zsh-syntax-highlighting $ZSH_CUSTOM/plugins/zsh-syntax-highlighting"
-              ]
+                "set -e && REAL_HOME=$(getent passwd ${SUDO_USER:-$USER} | cut -d: -f6) && ZSH_CUSTOM=\"${ZSH_CUSTOM:-$REAL_HOME/.oh-my-zsh/custom}\" && if [ ! -d \"$ZSH_CUSTOM/plugins/zsh-syntax-highlighting/.git\" ]; then git clone --depth=1 https://github.com/zsh-users/zsh-syntax-highlighting \"$ZSH_CUSTOM/plugins/zsh-syntax-highlighting\"; else git -C \"$ZSH_CUSTOM/plugins/zsh-syntax-highlighting\" pull --ff-only; fi"
+              ],
+              "size_kb": 4000
             }
           }
         }
@@ -240,8 +261,13 @@
               "method": "custom",
               "check": "command -v starship",
               "commands": [
-                "curl -fsSL https://starship.rs/install.sh | sh -s -- -y"
-              ]
+                "set -e && curl -fsSL https://starship.rs/install.sh | sh -s -- -y -b /usr/local/bin"
+              ],
+              "size_kb": 6000
+            },
+            "windows": {
+              "method": "winget",
+              "id": "Starship.Starship"
             }
           }
         }

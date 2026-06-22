@@ -20,7 +20,10 @@
                 "curl -fsSL https://get.docker.com | sh"
               ]
             },
-            "windows": { "method": "winget", "id": "Docker.DockerDesktop" }
+            "windows": {
+              "method": "winget",
+              "id": "Docker.DockerDesktop"
+            }
           }
         },
         {
@@ -29,21 +32,29 @@
           "description": "Multi-container orchestration",
           "default": false,
           "platforms": {
-            "linux": { "method": "apt", "packages": ["docker-compose-plugin"], "check": "docker compose version >/dev/null 2>&1" }
+            "linux": {
+              "method": "custom",
+              "check": "docker compose version >/dev/null 2>&1",
+              "commands": [
+                "set -e && if ! command -v docker >/dev/null 2>&1; then curl -fsSL https://get.docker.com | sh; fi && apt-get install -y docker-compose-plugin"
+              ],
+              "size_kb": 18000
+            }
           }
         },
         {
           "id": "lazydocker",
           "name": "lazydocker",
           "description": "TUI for Docker management",
-          "default": true,
+          "default": false,
           "platforms": {
             "linux": {
               "method": "custom",
               "check": "command -v lazydocker",
               "commands": [
-                "GOBIN=/usr/local/bin /usr/local/go/bin/go install github.com/jesseduffield/lazydocker@latest 2>/dev/null || echo 'install go first'"
-              ]
+                "set -e && curl -fsSL https://raw.githubusercontent.com/jesseduffield/lazydocker/master/scripts/install_update_linux.sh | bash && install -m 755 \"$HOME/.local/bin/lazydocker\" /usr/local/bin/lazydocker"
+              ],
+              "size_kb": 18000
             }
           }
         }
@@ -64,7 +75,8 @@
               "check": "command -v distrobox",
               "commands": [
                 "curl -s https://raw.githubusercontent.com/89luca89/distrobox/main/install | sh -s -- --prefix /usr/local"
-              ]
+              ],
+              "size_kb": 12000
             }
           }
         }
@@ -80,7 +92,13 @@
           "description": "Daemonless container engine",
           "default": false,
           "platforms": {
-            "linux": { "method": "apt", "packages": ["podman"], "check": "command -v podman" }
+            "linux": {
+              "method": "apt",
+              "packages": [
+                "podman"
+              ],
+              "check": "command -v podman"
+            }
           }
         }
       ]

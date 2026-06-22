@@ -29,6 +29,7 @@ func main() {
 	var (
 		versionFlag      = flag.Bool("version", false, "show version and exit")
 		listFlag         = flag.Bool("list", false, "list all categories and packages")
+		checkFlag        = flag.Bool("check", false, "check which packages from manifests are already installed")
 		manifestInfoFlag = flag.Bool("manifest-info", false, "show which manifests were loaded and from where")
 		listProfilesFlag = flag.Bool("list-profiles", false, "list saved profiles in the default profile directory")
 		dryRun           = flag.Bool("dry-run", false, "go through everything but don't actually install")
@@ -52,7 +53,7 @@ func main() {
 	}
 
 	// privileges are not required for read-only commands
-	requirePriv := !*listFlag && !*manifestInfoFlag && !*dryRun
+	requirePriv := !*listFlag && !*checkFlag && !*manifestInfoFlag && !*dryRun
 	if requirePriv {
 		requirePrivileges()
 	}
@@ -103,6 +104,11 @@ func main() {
 	if *listFlag {
 		printList(categories)
 		os.Exit(0)
+	}
+
+	if *checkFlag {
+		runCheck(categories, osInfo)
+		return
 	}
 
 	registry := installer.NewRegistry(osInfo)
@@ -188,6 +194,51 @@ func main() {
 	}
 
 	fmt.Printf("\nlog: %s\n", logger.LogPath())
+}
+
+func runCheck(categories []manifest.Category, osInfo platform.OSInfo) {
+	fmt.Println("\ncheck: scanning installed packages from manifests...")
+
+	ctx, cancel := context.WithTimeout(context.Background(), 90*time.Second)
+	defer cancel()
+
+	result := preflight.Run(ctx, categories, string(osInfo.OS), defaultDiskPath())
+
+	installed := 0
+	missing := 0
+	unknown := 0
+
+	for _, cat := range categories {
+		fmt.Printf("\n== %s ==\n", cat.Name)
+		for _, sub := range cat.Subcategories {
+			fmt.Printf("  -- %s --\n", sub.Name)
+			for _, pkg := range sub.Packages {
+				key := cat.ID + "." + sub.ID + "." + pkg.ID
+				st, ok := result.Packages[key]
+				if !ok {
+					fmt.Printf("    [?] %-24s  no check result\n", pkg.Name)
+					unknown++
+					continue
+				}
+				if st.Installed {
+					fmt.Printf("    [OK] %-24s  installed\n", pkg.Name)
+					installed++
+				} else {
+					fmt.Printf("    [--] %-24s  missing\n", pkg.Name)
+					missing++
+				}
+			}
+		}
+	}
+
+	fmt.Printf("\nsummary: installed=%d missing=%d unknown=%d total=%d\n", installed, missing, unknown, installed+missing+unknown)
+	if path := logger.LogPath(); path != "" {
+		fmt.Printf("log: %s\n", path)
+	}
+
+	if missing > 0 || unknown > 0 {
+		os.Exit(2)
+	}
 }
 
 // runApply executes a profile non-interactively.

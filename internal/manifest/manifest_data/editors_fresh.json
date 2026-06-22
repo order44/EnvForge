@@ -1,7 +1,7 @@
 {
   "id": "editors_fresh",
   "name": "Fresh IDE",
-  "description": "Fresh \u2014 terminal-based IDE with LSP, plugins, vim mode, SSH remote editing",
+  "description": "Fresh — terminal-based IDE with LSP, plugins, vim mode, SSH remote editing",
   "subcategories": [
     {
       "id": "fresh_app",
@@ -10,19 +10,20 @@
         {
           "id": "fresh",
           "name": "fresh",
-          "description": "Terminal IDE (Rust) with built-in LSP support for 15+ languages",
+          "description": "Terminal IDE",
           "default": true,
           "platforms": {
             "linux": {
               "method": "custom",
               "check": "command -v fresh",
               "commands": [
-                "set -e && for i in 1 2 3; do curl -fsSL --retry 3 --retry-delay 2 --connect-timeout 15 https://raw.githubusercontent.com/sinelaw/fresh/refs/heads/master/scripts/install.sh -o /tmp/fresh-install.sh && break || sleep 3; done && sh /tmp/fresh-install.sh && rm -f /tmp/fresh-install.sh"
-              ]
+                "set -e && URL=$(curl -s https://api.github.com/repos/sinelaw/fresh/releases/latest | grep \"browser_download_url.*_$(dpkg --print-architecture)\\.deb\" | cut -d '\"' -f 4 | head -1) && [ -n \"$URL\" ] && curl -fsSLo /tmp/fresh-editor.deb \"$URL\" && apt-get install -y /tmp/fresh-editor.deb && rm -f /tmp/fresh-editor.deb"
+              ],
+              "size_kb": 35000
             },
             "windows": {
               "method": "winget",
-              "id": "fresh-editor"
+              "id": "sinelaw.fresh-editor"
             }
           }
         }
@@ -61,9 +62,9 @@
           "platforms": {
             "linux": {
               "method": "custom",
-              "check": "command -v rust-analyzer",
+              "check": "command -v rust-analyzer || /usr/local/bin/rustup component list --installed 2>/dev/null | grep -q \"^rust-analyzer\"",
               "commands": [
-                ". $HOME/.cargo/env 2>/dev/null; rustup component add rust-analyzer 2>/dev/null || true"
+                "set -e && /usr/local/bin/rustup component add rust-analyzer"
               ]
             }
           }
@@ -78,7 +79,7 @@
               "method": "custom",
               "check": "command -v gopls",
               "commands": [
-                "GOBIN=/usr/local/bin /usr/local/go/bin/go install golang.org/x/tools/gopls@latest 2>/dev/null || true"
+                "set -e && GOBIN=/usr/local/bin $(command -v go || echo /usr/local/go/bin/go) install golang.org/x/tools/gopls@latest"
               ]
             }
           }
@@ -207,21 +208,21 @@
         },
         {
           "id": "fresh-json-lsp",
-          "name": "vscode-json-languageserver",
+          "name": "vscode-json-language-server",
           "description": "JSON LSP",
           "default": false,
           "platforms": {
             "linux": {
               "method": "npm",
               "packages": [
-                "vscode-json-languageserver"
+                "vscode-langservers-extracted"
               ],
-              "check": "command -v vscode-json-languageserver"
+              "check": "command -v vscode-json-language-server"
             },
             "windows": {
               "method": "npm",
               "packages": [
-                "vscode-json-languageserver"
+                "vscode-langservers-extracted"
               ]
             }
           }
@@ -243,21 +244,6 @@
               "method": "npm",
               "packages": [
                 "dockerfile-language-server-nodejs"
-              ]
-            }
-          }
-        },
-        {
-          "id": "fresh-terraform-lsp",
-          "name": "terraform-ls",
-          "description": "Terraform LSP",
-          "default": false,
-          "platforms": {
-            "linux": {
-              "method": "custom",
-              "check": "command -v terraform-ls",
-              "commands": [
-                "curl -fsSLo /tmp/tfls.zip \"https://releases.hashicorp.com/terraform-ls/0.33.0/terraform-ls_0.33.0_linux_amd64.zip\" && unzip -qo /tmp/tfls.zip -d /tmp && install /tmp/terraform-ls /usr/local/bin/ && rm -f /tmp/tfls.zip /tmp/terraform-ls"
               ]
             }
           }

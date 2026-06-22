@@ -82,6 +82,7 @@ func NewRegistry(osInfo platform.OSInfo) *Registry {
 	r.Register(&CustomInstaller{})
 	r.Register(&SnapInstaller{})
 	r.Register(&VscodeExtInstaller{})
+	r.Register(&VisualStudioInstaller{})
 	r.Register(&WarpInstaller{})
 	r.Register(&MiseInstaller{})
 	return r
@@ -104,6 +105,29 @@ func (r *Registry) Get(method string) (Installer, error) {
 	return inst, nil
 }
 
+func isPackageInstalled(ctx context.Context, pkg manifest.Package, plat manifest.Platform) bool {
+	if plat.Check != "" && executor.CheckShellSucceeds(ctx, plat.Check) {
+		return true
+	}
+
+	switch plat.Method {
+	case "vscode_ext":
+		return executor.VSCodeExtensionInstalled(ctx, plat.ID)
+	case "pipx":
+		if len(plat.Packages) == 0 {
+			return false
+		}
+		for _, spec := range plat.Packages {
+			if !executor.PipxPackageInstalled(ctx, spec) {
+				return false
+			}
+		}
+		return true
+	default:
+		return false
+	}
+}
+
 // InstallPackage performs idempotency check, runs the installer, then post-install steps.
 func (r *Registry) InstallPackage(ctx context.Context, pkg manifest.Package) InstallResult {
 	osName := string(r.osInfo.OS)
@@ -120,14 +144,11 @@ func (r *Registry) InstallPackage(ctx context.Context, pkg manifest.Package) Ins
 		return base
 	}
 
-	// Idempotency check
-	if plat.Check != "" {
-		if executor.CheckShellSucceeds(ctx, plat.Check) {
-			logger.Log.Info().Str("package", pkg.ID).Str("check", plat.Check).Msg("already installed, skipping")
-			base.Status = StatusSkipped
-			base.Error = "already installed"
-			return base
-		}
+	if isPackageInstalled(ctx, pkg, plat) {
+		logger.Log.Info().Str("package", pkg.ID).Msg("already installed, skipping")
+		base.Status = StatusSkipped
+		base.Error = "already installed"
+		return base
 	}
 
 	// Dry-run short-circuit

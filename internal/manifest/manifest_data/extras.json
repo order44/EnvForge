@@ -1,7 +1,7 @@
 {
   "id": "extras",
   "name": "Extras",
-  "description": "Browsers, system optimization, containers, desktop apps",
+  "description": "Browsers, system optimization and desktop apps",
   "subcategories": [
     {
       "id": "browsers",
@@ -16,9 +16,15 @@
             "linux": {
               "method": "custom",
               "check": "command -v firefox || command -v firefox-esr",
-              "commands": ["apt-get install -y firefox 2>/dev/null || apt-get install -y firefox-esr"]
+              "commands": [
+                "set -e && apt-get install -y firefox 2>/dev/null || apt-get install -y firefox-esr"
+              ],
+              "size_kb": 260000
             },
-            "windows": { "method": "winget", "id": "Mozilla.Firefox" }
+            "windows": {
+              "method": "winget",
+              "id": "Mozilla.Firefox"
+            }
           }
         },
         {
@@ -27,37 +33,17 @@
           "description": "Open-source Chrome browser",
           "default": false,
           "platforms": {
-            "linux":   { "method": "apt", "packages": ["chromium"], "check": "command -v chromium" },
-            "windows": { "method": "winget", "id": "Google.Chrome" }
-          }
-        }
-      ]
-    },
-    {
-      "id": "containers",
-      "name": "Containers",
-      "packages": [
-        {
-          "id": "docker",
-          "name": "docker",
-          "description": "Container runtime",
-          "default": false,
-          "platforms": {
             "linux": {
-              "method": "custom",
-              "check": "command -v docker",
-              "commands": ["curl -fsSL https://get.docker.com | sh"]
+              "method": "apt",
+              "packages": [
+                "chromium"
+              ],
+              "check": "command -v chromium"
             },
-            "windows": { "method": "winget", "id": "Docker.DockerDesktop" }
-          }
-        },
-        {
-          "id": "docker-compose",
-          "name": "docker-compose",
-          "description": "Multi-container orchestration",
-          "default": false,
-          "platforms": {
-            "linux": { "method": "apt", "packages": ["docker-compose-plugin"], "check": "docker compose version >/dev/null 2>&1" }
+            "windows": {
+              "method": "winget",
+              "id": "Hibbiki.Chromium"
+            }
           }
         }
       ]
@@ -72,24 +58,37 @@
           "description": "SQLite CLI",
           "default": true,
           "platforms": {
-            "linux": { "method": "apt", "packages": ["sqlite3"], "check": "command -v sqlite3" }
+            "linux": {
+              "method": "apt",
+              "packages": [
+                "sqlite3"
+              ],
+              "check": "command -v sqlite3"
+            }
           }
         },
         {
-  "id": "dbeaver",
-  "name": "dbeaver",
-  "description": "Universal database GUI",
-  "default": false,
-  "platforms": {
-    "linux": {
-      "method": "custom",
-      "check": "command -v dbeaver",
-      "commands": [
-        "set -e && curl -fsSLo /tmp/dbeaver.deb https://dbeaver.io/files/dbeaver-ce_latest_amd64.deb && (dpkg -i /tmp/dbeaver.deb || apt-get install -f -y) && rm -f /tmp/dbeaver.deb"
+          "id": "dbeaver",
+          "name": "dbeaver",
+          "description": "Universal database GUI",
+          "default": false,
+          "platforms": {
+            "linux": {
+              "method": "custom",
+              "check": "command -v dbeaver || dpkg -s dbeaver-ce >/dev/null 2>&1",
+              "commands": [
+                "set -e && ARCH=$(dpkg --print-architecture) && if [ \"$ARCH\" != \"amd64\" ]; then echo \"DBeaver CE upstream publishes only amd64 .deb in this installer\" >&2; exit 1; fi && curl -fsSLo /tmp/dbeaver.deb https://dbeaver.io/files/dbeaver-ce_latest_amd64.deb && apt-get install -y /tmp/dbeaver.deb && rm -f /tmp/dbeaver.deb"
+              ],
+              "size_kb": 230000
+            },
+            "windows": {
+              "method": "winget",
+              "id": "dbeaver.dbeaver"
+            }
+          }
+        }
       ]
-    }
-  }
-},
+    },
     {
       "id": "apps",
       "name": "Desktop Apps",
@@ -100,8 +99,17 @@
           "description": "Password manager",
           "default": false,
           "platforms": {
-            "linux":   { "method": "apt", "packages": ["keepassxc"], "check": "command -v keepassxc" },
-            "windows": { "method": "winget", "id": "KeePassXCTeam.KeePassXC" }
+            "linux": {
+              "method": "apt",
+              "packages": [
+                "keepassxc"
+              ],
+              "check": "command -v keepassxc"
+            },
+            "windows": {
+              "method": "winget",
+              "id": "KeePassXCTeam.KeePassXC"
+            }
           }
         },
         {
@@ -110,8 +118,17 @@
           "description": "Media player",
           "default": false,
           "platforms": {
-            "linux":   { "method": "apt", "packages": ["vlc"], "check": "command -v vlc" },
-            "windows": { "method": "winget", "id": "VideoLAN.VLC" }
+            "linux": {
+              "method": "apt",
+              "packages": [
+                "vlc"
+              ],
+              "check": "command -v vlc"
+            },
+            "windows": {
+              "method": "winget",
+              "id": "VideoLAN.VLC"
+            }
           }
         },
         {
@@ -120,8 +137,17 @@
           "description": "Screenshot tool",
           "default": false,
           "platforms": {
-            "linux":   { "method": "apt", "packages": ["flameshot"], "check": "command -v flameshot" },
-            "windows": { "method": "winget", "id": "Flameshot.Flameshot" }
+            "linux": {
+              "method": "apt",
+              "packages": [
+                "flameshot"
+              ],
+              "check": "command -v flameshot"
+            },
+            "windows": {
+              "method": "winget",
+              "id": "Flameshot.Flameshot"
+            }
           }
         }
       ]
@@ -136,7 +162,10 @@
           "description": "Microsoft power-user utilities",
           "default": true,
           "platforms": {
-            "windows": { "method": "winget", "id": "Microsoft.PowerToys" }
+            "windows": {
+              "method": "winget",
+              "id": "Microsoft.PowerToys"
+            }
           }
         },
         {
@@ -145,48 +174,9 @@
           "description": "Modern terminal for Windows",
           "default": true,
           "platforms": {
-            "windows": { "method": "winget", "id": "Microsoft.WindowsTerminal" }
-          }
-        }
-      ]
-    },
-    {
-      "id": "terminal_apps",
-      "name": "Terminal Emulators",
-      "packages": [
-        {
-          "id": "warp",
-          "name": "warp",
-          "description": "Modern terminal with AI",
-          "default": false,
-          "platforms": {
-            "linux": {
-              "method": "custom",
-              "check": "command -v warp-terminal || command -v warp",
-              "commands": [
-                "set -e && curl -fsSL https://app.warp.dev/download -o /tmp/warp.deb && (dpkg -i /tmp/warp.deb || apt-get install -f -y) && rm -f /tmp/warp.deb"
-              ]
-            }
-          }
-        }
-      ]
-    },
-    {
-      "id": "containers",
-      "name": "Containers",
-      "packages": [
-        {
-          "id": "distrobox",
-          "name": "distrobox",
-          "description": "Run any Linux distro in a container",
-          "default": true,
-          "platforms": {
-            "linux": {
-              "method": "custom",
-              "check": "command -v distrobox",
-              "commands": [
-                "curl -s https://raw.githubusercontent.com/89luca89/distrobox/main/install | sh -s -- --prefix /usr/local"
-              ]
+            "windows": {
+              "method": "winget",
+              "id": "Microsoft.WindowsTerminal"
             }
           }
         }
@@ -194,4 +184,3 @@
     }
   ]
 }
-

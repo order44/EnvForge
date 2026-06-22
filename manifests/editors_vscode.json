@@ -17,10 +17,14 @@
               "method": "custom",
               "check": "command -v code",
               "commands": [
-                "set -e && rm -f /usr/share/keyrings/ms.gpg && curl -fsSL https://packages.microsoft.com/keys/microsoft.asc | gpg --yes --dearmor -o /usr/share/keyrings/ms.gpg && echo 'deb [arch=amd64 signed-by=/usr/share/keyrings/ms.gpg] https://packages.microsoft.com/repos/code stable main' > /etc/apt/sources.list.d/vscode.list && apt-get update && apt-get install -y code"
-              ]
+                "set -e && apt-get install -y wget gpg && wget -qO- https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor -o /usr/share/keyrings/microsoft.gpg && cat > /etc/apt/sources.list.d/vscode.sources <<'EOF'\nTypes: deb\nURIs: https://packages.microsoft.com/repos/code\nSuites: stable\nComponents: main\nArchitectures: amd64 arm64 armhf\nSigned-By: /usr/share/keyrings/microsoft.gpg\nEOF\napt-get update && apt-get install -y code"
+              ],
+              "size_kb": 250000
             },
-            "windows": { "method": "winget", "id": "Microsoft.VisualStudioCode" }
+            "windows": {
+              "method": "winget",
+              "id": "Microsoft.VisualStudioCode"
+            }
           }
         }
       ]
@@ -29,90 +33,692 @@
       "id": "vscode_lang",
       "name": "Language Extensions",
       "packages": [
-        { "id": "ext-cpp", "name": "C/C++", "description": "C/C++ IntelliSense and debugging", "default": true,
-          "platforms": { "linux": { "method": "vscode_ext", "id": "ms-vscode.cpptools-extension-pack" }, "windows": { "method": "vscode_ext", "id": "ms-vscode.cpptools-extension-pack" } } },
-        { "id": "ext-python", "name": "Python", "description": "Python language support", "default": true,
-          "platforms": { "linux": { "method": "vscode_ext", "id": "ms-python.python" }, "windows": { "method": "vscode_ext", "id": "ms-python.python" } } },
-        { "id": "ext-pylance", "name": "Pylance", "description": "Fast Python language server", "default": true,
-          "platforms": { "linux": { "method": "vscode_ext", "id": "ms-python.vscode-pylance" }, "windows": { "method": "vscode_ext", "id": "ms-python.vscode-pylance" } } },
-        { "id": "ext-go", "name": "Go", "description": "Go language support", "default": true,
-          "platforms": { "linux": { "method": "vscode_ext", "id": "golang.go" }, "windows": { "method": "vscode_ext", "id": "golang.go" } } },
-        { "id": "ext-rust", "name": "rust-analyzer", "description": "Rust language support", "default": true,
-          "platforms": { "linux": { "method": "vscode_ext", "id": "rust-lang.rust-analyzer" }, "windows": { "method": "vscode_ext", "id": "rust-lang.rust-analyzer" } } },
-        { "id": "ext-csharp", "name": "C# Dev Kit", "description": "C# language support", "default": true,
-          "platforms": { "linux": { "method": "vscode_ext", "id": "ms-dotnettools.csdevkit" }, "windows": { "method": "vscode_ext", "id": "ms-dotnettools.csdevkit" } } },
-        { "id": "ext-java", "name": "Java Extension Pack", "description": "Java development tools", "default": false,
-          "platforms": { "linux": { "method": "vscode_ext", "id": "vscjava.vscode-java-pack" }, "windows": { "method": "vscode_ext", "id": "vscjava.vscode-java-pack" } } },
-        { "id": "ext-vue", "name": "Vue - Official", "description": "Vue.js language support", "default": true,
-          "platforms": { "linux": { "method": "vscode_ext", "id": "Vue.volar" }, "windows": { "method": "vscode_ext", "id": "Vue.volar" } } },
-        { "id": "ext-svelte", "name": "Svelte", "description": "Svelte language support", "default": false,
-          "platforms": { "linux": { "method": "vscode_ext", "id": "svelte.svelte-vscode" }, "windows": { "method": "vscode_ext", "id": "svelte.svelte-vscode" } } },
-        { "id": "ext-pwsh", "name": "PowerShell", "description": "PowerShell language support", "default": false,
-          "platforms": { "linux": { "method": "vscode_ext", "id": "ms-vscode.powershell" }, "windows": { "method": "vscode_ext", "id": "ms-vscode.powershell" } } },
-        { "id": "ext-bash", "name": "Bash IDE", "description": "Bash language support", "default": true,
-          "platforms": { "linux": { "method": "vscode_ext", "id": "mads-hartmann.bash-ide-vscode" }, "windows": { "method": "vscode_ext", "id": "mads-hartmann.bash-ide-vscode" } } },
-        { "id": "ext-shellcheck", "name": "ShellCheck", "description": "Shell script linting", "default": true,
-          "platforms": { "linux": { "method": "vscode_ext", "id": "timonwong.shellcheck" }, "windows": { "method": "vscode_ext", "id": "timonwong.shellcheck" } } }
+        {
+          "id": "ext-cpp",
+          "name": "C/C++",
+          "description": "C/C++ IntelliSense and debugging",
+          "default": true,
+          "platforms": {
+            "linux": {
+              "method": "vscode_ext",
+              "id": "ms-vscode.cpptools-extension-pack"
+            },
+            "windows": {
+              "method": "vscode_ext",
+              "id": "ms-vscode.cpptools-extension-pack"
+            }
+          }
+        },
+        {
+          "id": "ext-python",
+          "name": "Python",
+          "description": "Python language support",
+          "default": true,
+          "platforms": {
+            "linux": {
+              "method": "vscode_ext",
+              "id": "ms-python.python"
+            },
+            "windows": {
+              "method": "vscode_ext",
+              "id": "ms-python.python"
+            }
+          }
+        },
+        {
+          "id": "ext-pylance",
+          "name": "Pylance",
+          "description": "Fast Python language server",
+          "default": true,
+          "platforms": {
+            "linux": {
+              "method": "vscode_ext",
+              "id": "ms-python.vscode-pylance"
+            },
+            "windows": {
+              "method": "vscode_ext",
+              "id": "ms-python.vscode-pylance"
+            }
+          }
+        },
+        {
+          "id": "ext-go",
+          "name": "Go",
+          "description": "Go language support",
+          "default": true,
+          "platforms": {
+            "linux": {
+              "method": "vscode_ext",
+              "id": "golang.go"
+            },
+            "windows": {
+              "method": "vscode_ext",
+              "id": "golang.go"
+            }
+          }
+        },
+        {
+          "id": "ext-rust",
+          "name": "rust-analyzer",
+          "description": "Rust language support",
+          "default": true,
+          "platforms": {
+            "linux": {
+              "method": "vscode_ext",
+              "id": "rust-lang.rust-analyzer"
+            },
+            "windows": {
+              "method": "vscode_ext",
+              "id": "rust-lang.rust-analyzer"
+            }
+          }
+        },
+        {
+          "id": "ext-csharp",
+          "name": "C# Dev Kit",
+          "description": "C# language support",
+          "default": true,
+          "platforms": {
+            "linux": {
+              "method": "vscode_ext",
+              "id": "ms-dotnettools.csdevkit"
+            },
+            "windows": {
+              "method": "vscode_ext",
+              "id": "ms-dotnettools.csdevkit"
+            }
+          }
+        },
+        {
+          "id": "ext-csharp-base",
+          "name": "C#",
+          "description": "Base C# language support",
+          "default": true,
+          "platforms": {
+            "linux": {
+              "method": "vscode_ext",
+              "id": "ms-dotnettools.csharp"
+            },
+            "windows": {
+              "method": "vscode_ext",
+              "id": "ms-dotnettools.csharp"
+            }
+          }
+        },
+        {
+          "id": "ext-dotnet-runtime",
+          "name": ".NET Install Tool",
+          "description": "Required runtime/tooling helper for .NET extensions",
+          "default": true,
+          "platforms": {
+            "linux": {
+              "method": "vscode_ext",
+              "id": "ms-dotnettools.vscode-dotnet-runtime"
+            },
+            "windows": {
+              "method": "vscode_ext",
+              "id": "ms-dotnettools.vscode-dotnet-runtime"
+            }
+          }
+        },
+        {
+          "id": "ext-java",
+          "name": "Java Extension Pack",
+          "description": "Java development tools",
+          "default": false,
+          "platforms": {
+            "linux": {
+              "method": "vscode_ext",
+              "id": "vscjava.vscode-java-pack"
+            },
+            "windows": {
+              "method": "vscode_ext",
+              "id": "vscjava.vscode-java-pack"
+            }
+          }
+        },
+        {
+          "id": "ext-vue",
+          "name": "Vue - Official",
+          "description": "Vue.js language support",
+          "default": true,
+          "platforms": {
+            "linux": {
+              "method": "vscode_ext",
+              "id": "Vue.volar"
+            },
+            "windows": {
+              "method": "vscode_ext",
+              "id": "Vue.volar"
+            }
+          }
+        },
+        {
+          "id": "ext-svelte",
+          "name": "Svelte",
+          "description": "Svelte language support",
+          "default": false,
+          "platforms": {
+            "linux": {
+              "method": "vscode_ext",
+              "id": "svelte.svelte-vscode"
+            },
+            "windows": {
+              "method": "vscode_ext",
+              "id": "svelte.svelte-vscode"
+            }
+          }
+        },
+        {
+          "id": "ext-pwsh",
+          "name": "PowerShell",
+          "description": "PowerShell language support",
+          "default": false,
+          "platforms": {
+            "linux": {
+              "method": "vscode_ext",
+              "id": "ms-vscode.powershell"
+            },
+            "windows": {
+              "method": "vscode_ext",
+              "id": "ms-vscode.powershell"
+            }
+          }
+        },
+        {
+          "id": "ext-bash",
+          "name": "Bash IDE",
+          "description": "Bash language support",
+          "default": true,
+          "platforms": {
+            "linux": {
+              "method": "vscode_ext",
+              "id": "mads-hartmann.bash-ide-vscode"
+            },
+            "windows": {
+              "method": "vscode_ext",
+              "id": "mads-hartmann.bash-ide-vscode"
+            }
+          }
+        },
+        {
+          "id": "ext-shellcheck",
+          "name": "ShellCheck",
+          "description": "Shell script linting",
+          "default": true,
+          "platforms": {
+            "linux": {
+              "method": "vscode_ext",
+              "id": "timonwong.shellcheck"
+            },
+            "windows": {
+              "method": "vscode_ext",
+              "id": "timonwong.shellcheck"
+            }
+          }
+        }
       ]
     },
     {
       "id": "vscode_tools",
       "name": "Productivity Extensions",
       "packages": [
-        { "id": "ext-gitlens", "name": "GitLens", "description": "Git supercharged", "default": true,
-          "platforms": { "linux": { "method": "vscode_ext", "id": "eamodio.gitlens" }, "windows": { "method": "vscode_ext", "id": "eamodio.gitlens" } } },
-        { "id": "ext-gitgraph", "name": "Git Graph", "description": "Git graph visualization", "default": true,
-          "platforms": { "linux": { "method": "vscode_ext", "id": "mhutchie.git-graph" }, "windows": { "method": "vscode_ext", "id": "mhutchie.git-graph" } } },
-        { "id": "ext-docker", "name": "Docker", "description": "Docker integration", "default": false,
-          "platforms": { "linux": { "method": "vscode_ext", "id": "ms-azuretools.vscode-docker" }, "windows": { "method": "vscode_ext", "id": "ms-azuretools.vscode-docker" } } },
-        { "id": "ext-remote-ssh", "name": "Remote - SSH", "description": "Remote development via SSH", "default": true,
-          "platforms": { "linux": { "method": "vscode_ext", "id": "ms-vscode-remote.remote-ssh" }, "windows": { "method": "vscode_ext", "id": "ms-vscode-remote.remote-ssh" } } },
-        { "id": "ext-errorlens", "name": "Error Lens", "description": "Inline error highlighting", "default": true,
-          "platforms": { "linux": { "method": "vscode_ext", "id": "usernamehw.errorlens" }, "windows": { "method": "vscode_ext", "id": "usernamehw.errorlens" } } },
-        { "id": "ext-todotree", "name": "Todo Tree", "description": "TODO/FIXME tree view", "default": true,
-          "platforms": { "linux": { "method": "vscode_ext", "id": "Gruntfuggly.todo-tree" }, "windows": { "method": "vscode_ext", "id": "Gruntfuggly.todo-tree" } } },
-        { "id": "ext-prettier", "name": "Prettier", "description": "Code formatter", "default": true,
-          "platforms": { "linux": { "method": "vscode_ext", "id": "esbenp.prettier-vscode" }, "windows": { "method": "vscode_ext", "id": "esbenp.prettier-vscode" } } },
-        { "id": "ext-eslint", "name": "ESLint", "description": "JS/TS linter integration", "default": true,
-          "platforms": { "linux": { "method": "vscode_ext", "id": "dbaeumer.vscode-eslint" }, "windows": { "method": "vscode_ext", "id": "dbaeumer.vscode-eslint" } } },
-        { "id": "ext-restclient", "name": "REST Client", "description": "HTTP request testing", "default": false,
-          "platforms": { "linux": { "method": "vscode_ext", "id": "humao.rest-client" }, "windows": { "method": "vscode_ext", "id": "humao.rest-client" } } },
-        { "id": "ext-hexeditor", "name": "Hex Editor", "description": "Binary file editor", "default": false,
-          "platforms": { "linux": { "method": "vscode_ext", "id": "ms-vscode.hexeditor" }, "windows": { "method": "vscode_ext", "id": "ms-vscode.hexeditor" } } },
-        { "id": "ext-yaml", "name": "YAML", "description": "YAML language support", "default": true,
-          "platforms": { "linux": { "method": "vscode_ext", "id": "redhat.vscode-yaml" }, "windows": { "method": "vscode_ext", "id": "redhat.vscode-yaml" } } },
-        { "id": "ext-markdown", "name": "Markdown All in One", "description": "Markdown editing tools", "default": true,
-          "platforms": { "linux": { "method": "vscode_ext", "id": "yzhang.markdown-all-in-one" }, "windows": { "method": "vscode_ext", "id": "yzhang.markdown-all-in-one" } } },
-        { "id": "ext-editorconfig", "name": "EditorConfig", "description": "EditorConfig support", "default": true,
-          "platforms": { "linux": { "method": "vscode_ext", "id": "EditorConfig.EditorConfig" }, "windows": { "method": "vscode_ext", "id": "EditorConfig.EditorConfig" } } },
-        { "id": "ext-path-intellisense", "name": "Path Intellisense", "description": "File path autocomplete", "default": true,
-          "platforms": { "linux": { "method": "vscode_ext", "id": "christian-kohler.path-intellisense" }, "windows": { "method": "vscode_ext", "id": "christian-kohler.path-intellisense" } } },
-        { "id": "ext-remote-wsl", "name": "Remote - WSL", "description": "WSL development support", "default": false,
-          "platforms": { "windows": { "method": "vscode_ext", "id": "ms-vscode-remote.remote-wsl" } } },
-        { "id": "ext-spell", "name": "Code Spell Checker", "description": "Spelling checker for code", "default": false,
-          "platforms": { "linux": { "method": "vscode_ext", "id": "streetsidesoftware.code-spell-checker" }, "windows": { "method": "vscode_ext", "id": "streetsidesoftware.code-spell-checker" } } },
-        { "id": "ext-thunder", "name": "Thunder Client", "description": "REST API testing client", "default": false,
-          "platforms": { "linux": { "method": "vscode_ext", "id": "rangav.vscode-thunder-client" }, "windows": { "method": "vscode_ext", "id": "rangav.vscode-thunder-client" } } }
+        {
+          "id": "ext-nuget-gallery",
+          "name": "NuGet Gallery",
+          "description": "Manage NuGet packages inside VS Code",
+          "default": true,
+          "platforms": {
+            "linux": {
+              "method": "vscode_ext",
+              "id": "patcx.vscode-nuget-gallery"
+            },
+            "windows": {
+              "method": "vscode_ext",
+              "id": "patcx.vscode-nuget-gallery"
+            }
+          }
+        },
+        {
+          "id": "ext-copilot-chat",
+          "name": "GitHub Copilot Chat",
+          "description": "AI-assisted coding and chat",
+          "default": false,
+          "platforms": {
+            "linux": {
+              "method": "vscode_ext",
+              "id": "GitHub.copilot-chat"
+            },
+            "windows": {
+              "method": "vscode_ext",
+              "id": "GitHub.copilot-chat"
+            }
+          }
+        },
+        {
+          "id": "ext-gitlens",
+          "name": "GitLens",
+          "description": "Git supercharged",
+          "default": true,
+          "platforms": {
+            "linux": {
+              "method": "vscode_ext",
+              "id": "eamodio.gitlens"
+            },
+            "windows": {
+              "method": "vscode_ext",
+              "id": "eamodio.gitlens"
+            }
+          }
+        },
+        {
+          "id": "ext-gitgraph",
+          "name": "Git Graph",
+          "description": "Git graph visualization",
+          "default": true,
+          "platforms": {
+            "linux": {
+              "method": "vscode_ext",
+              "id": "mhutchie.git-graph"
+            },
+            "windows": {
+              "method": "vscode_ext",
+              "id": "mhutchie.git-graph"
+            }
+          }
+        },
+        {
+          "id": "ext-docker",
+          "name": "Docker",
+          "description": "Docker integration",
+          "default": false,
+          "platforms": {
+            "linux": {
+              "method": "vscode_ext",
+              "id": "ms-azuretools.vscode-docker"
+            },
+            "windows": {
+              "method": "vscode_ext",
+              "id": "ms-azuretools.vscode-docker"
+            }
+          }
+        },
+        {
+          "id": "ext-remote-ssh",
+          "name": "Remote - SSH",
+          "description": "Remote development via SSH",
+          "default": true,
+          "platforms": {
+            "linux": {
+              "method": "vscode_ext",
+              "id": "ms-vscode-remote.remote-ssh"
+            },
+            "windows": {
+              "method": "vscode_ext",
+              "id": "ms-vscode-remote.remote-ssh"
+            }
+          }
+        },
+        {
+          "id": "ext-errorlens",
+          "name": "Error Lens",
+          "description": "Inline error highlighting",
+          "default": true,
+          "platforms": {
+            "linux": {
+              "method": "vscode_ext",
+              "id": "usernamehw.errorlens"
+            },
+            "windows": {
+              "method": "vscode_ext",
+              "id": "usernamehw.errorlens"
+            }
+          }
+        },
+        {
+          "id": "ext-todotree",
+          "name": "Todo Tree",
+          "description": "TODO/FIXME tree view",
+          "default": true,
+          "platforms": {
+            "linux": {
+              "method": "vscode_ext",
+              "id": "Gruntfuggly.todo-tree"
+            },
+            "windows": {
+              "method": "vscode_ext",
+              "id": "Gruntfuggly.todo-tree"
+            }
+          }
+        },
+        {
+          "id": "ext-prettier",
+          "name": "Prettier",
+          "description": "Code formatter",
+          "default": true,
+          "platforms": {
+            "linux": {
+              "method": "vscode_ext",
+              "id": "esbenp.prettier-vscode"
+            },
+            "windows": {
+              "method": "vscode_ext",
+              "id": "esbenp.prettier-vscode"
+            }
+          }
+        },
+        {
+          "id": "ext-eslint",
+          "name": "ESLint",
+          "description": "JS/TS linter integration",
+          "default": true,
+          "platforms": {
+            "linux": {
+              "method": "vscode_ext",
+              "id": "dbaeumer.vscode-eslint"
+            },
+            "windows": {
+              "method": "vscode_ext",
+              "id": "dbaeumer.vscode-eslint"
+            }
+          }
+        },
+        {
+          "id": "ext-restclient",
+          "name": "REST Client",
+          "description": "HTTP request testing",
+          "default": false,
+          "platforms": {
+            "linux": {
+              "method": "vscode_ext",
+              "id": "humao.rest-client"
+            },
+            "windows": {
+              "method": "vscode_ext",
+              "id": "humao.rest-client"
+            }
+          }
+        },
+        {
+          "id": "ext-hexeditor",
+          "name": "Hex Editor",
+          "description": "Binary file editor",
+          "default": false,
+          "platforms": {
+            "linux": {
+              "method": "vscode_ext",
+              "id": "ms-vscode.hexeditor"
+            },
+            "windows": {
+              "method": "vscode_ext",
+              "id": "ms-vscode.hexeditor"
+            }
+          }
+        },
+        {
+          "id": "ext-yaml",
+          "name": "YAML",
+          "description": "YAML language support",
+          "default": true,
+          "platforms": {
+            "linux": {
+              "method": "vscode_ext",
+              "id": "redhat.vscode-yaml"
+            },
+            "windows": {
+              "method": "vscode_ext",
+              "id": "redhat.vscode-yaml"
+            }
+          }
+        },
+        {
+          "id": "ext-markdown",
+          "name": "Markdown All in One",
+          "description": "Markdown editing tools",
+          "default": true,
+          "platforms": {
+            "linux": {
+              "method": "vscode_ext",
+              "id": "yzhang.markdown-all-in-one"
+            },
+            "windows": {
+              "method": "vscode_ext",
+              "id": "yzhang.markdown-all-in-one"
+            }
+          }
+        },
+        {
+          "id": "ext-editorconfig",
+          "name": "EditorConfig",
+          "description": "EditorConfig support",
+          "default": true,
+          "platforms": {
+            "linux": {
+              "method": "vscode_ext",
+              "id": "EditorConfig.EditorConfig"
+            },
+            "windows": {
+              "method": "vscode_ext",
+              "id": "EditorConfig.EditorConfig"
+            }
+          }
+        },
+        {
+          "id": "ext-path-intellisense",
+          "name": "Path Intellisense",
+          "description": "File path autocomplete",
+          "default": true,
+          "platforms": {
+            "linux": {
+              "method": "vscode_ext",
+              "id": "christian-kohler.path-intellisense"
+            },
+            "windows": {
+              "method": "vscode_ext",
+              "id": "christian-kohler.path-intellisense"
+            }
+          }
+        },
+        {
+          "id": "ext-remote-wsl",
+          "name": "Remote - WSL",
+          "description": "WSL development support",
+          "default": false,
+          "platforms": {
+            "windows": {
+              "method": "vscode_ext",
+              "id": "ms-vscode-remote.remote-wsl"
+            }
+          }
+        },
+        {
+          "id": "ext-spell",
+          "name": "Code Spell Checker",
+          "description": "Spelling checker for code",
+          "default": false,
+          "platforms": {
+            "linux": {
+              "method": "vscode_ext",
+              "id": "streetsidesoftware.code-spell-checker"
+            },
+            "windows": {
+              "method": "vscode_ext",
+              "id": "streetsidesoftware.code-spell-checker"
+            }
+          }
+        },
+        {
+          "id": "ext-thunder",
+          "name": "Thunder Client",
+          "description": "REST API testing client",
+          "default": false,
+          "platforms": {
+            "linux": {
+              "method": "vscode_ext",
+              "id": "rangav.vscode-thunder-client"
+            },
+            "windows": {
+              "method": "vscode_ext",
+              "id": "rangav.vscode-thunder-client"
+            }
+          }
+        }
       ]
     },
     {
       "id": "vscode_themes",
       "name": "Themes & Icons",
       "packages": [
-        { "id": "ext-catppuccin", "name": "Catppuccin", "description": "Pastel color theme", "default": true,
-          "platforms": { "linux": { "method": "vscode_ext", "id": "Catppuccin.catppuccin-vsc" }, "windows": { "method": "vscode_ext", "id": "Catppuccin.catppuccin-vsc" } } },
-        { "id": "ext-dracula", "name": "Dracula", "description": "Dark theme", "default": false,
-          "platforms": { "linux": { "method": "vscode_ext", "id": "dracula-theme.theme-dracula" }, "windows": { "method": "vscode_ext", "id": "dracula-theme.theme-dracula" } } },
-        { "id": "ext-tokyonight", "name": "Tokyo Night", "description": "Clean dark theme", "default": false,
-          "platforms": { "linux": { "method": "vscode_ext", "id": "enkia.tokyo-night" }, "windows": { "method": "vscode_ext", "id": "enkia.tokyo-night" } } },
-        { "id": "ext-onedark", "name": "One Dark Pro", "description": "Atom One Dark theme", "default": false,
-          "platforms": { "linux": { "method": "vscode_ext", "id": "zhuangtongfa.material-theme" }, "windows": { "method": "vscode_ext", "id": "zhuangtongfa.material-theme" } } },
-        { "id": "ext-material-icons", "name": "Material Icon Theme", "description": "File icon theme", "default": true,
-          "platforms": { "linux": { "method": "vscode_ext", "id": "PKief.material-icon-theme" }, "windows": { "method": "vscode_ext", "id": "PKief.material-icon-theme" } } },
-        { "id": "ext-github-theme", "name": "GitHub Theme", "description": "GitHub color themes", "default": false,
-          "platforms": { "linux": { "method": "vscode_ext", "id": "GitHub.github-vscode-theme" }, "windows": { "method": "vscode_ext", "id": "GitHub.github-vscode-theme" } } },
-        { "id": "ext-gruvbox", "name": "Gruvbox Theme", "description": "Gruvbox color theme", "default": false,
-          "platforms": { "linux": { "method": "vscode_ext", "id": "jdinhlife.gruvbox" }, "windows": { "method": "vscode_ext", "id": "jdinhlife.gruvbox" } } }
+        {
+          "id": "ext-catppuccin",
+          "name": "Catppuccin",
+          "description": "Pastel color theme",
+          "default": true,
+          "platforms": {
+            "linux": {
+              "method": "vscode_ext",
+              "id": "Catppuccin.catppuccin-vsc"
+            },
+            "windows": {
+              "method": "vscode_ext",
+              "id": "Catppuccin.catppuccin-vsc"
+            }
+          }
+        },
+        {
+          "id": "ext-dracula",
+          "name": "Dracula",
+          "description": "Dark theme",
+          "default": false,
+          "platforms": {
+            "linux": {
+              "method": "vscode_ext",
+              "id": "dracula-theme.theme-dracula"
+            },
+            "windows": {
+              "method": "vscode_ext",
+              "id": "dracula-theme.theme-dracula"
+            }
+          }
+        },
+        {
+          "id": "ext-tokyonight",
+          "name": "Tokyo Night",
+          "description": "Clean dark theme",
+          "default": false,
+          "platforms": {
+            "linux": {
+              "method": "vscode_ext",
+              "id": "enkia.tokyo-night"
+            },
+            "windows": {
+              "method": "vscode_ext",
+              "id": "enkia.tokyo-night"
+            }
+          }
+        },
+        {
+          "id": "ext-onedark",
+          "name": "One Dark Pro",
+          "description": "Atom One Dark theme",
+          "default": false,
+          "platforms": {
+            "linux": {
+              "method": "vscode_ext",
+              "id": "zhuangtongfa.material-theme"
+            },
+            "windows": {
+              "method": "vscode_ext",
+              "id": "zhuangtongfa.material-theme"
+            }
+          }
+        },
+        {
+          "id": "ext-material-icons",
+          "name": "Material Icon Theme",
+          "description": "File icon theme",
+          "default": true,
+          "platforms": {
+            "linux": {
+              "method": "vscode_ext",
+              "id": "PKief.material-icon-theme"
+            },
+            "windows": {
+              "method": "vscode_ext",
+              "id": "PKief.material-icon-theme"
+            }
+          }
+        },
+        {
+          "id": "ext-github-theme",
+          "name": "GitHub Theme",
+          "description": "GitHub color themes",
+          "default": false,
+          "platforms": {
+            "linux": {
+              "method": "vscode_ext",
+              "id": "GitHub.github-vscode-theme"
+            },
+            "windows": {
+              "method": "vscode_ext",
+              "id": "GitHub.github-vscode-theme"
+            }
+          }
+        },
+        {
+          "id": "ext-gruvbox",
+          "name": "Gruvbox Theme",
+          "description": "Gruvbox color theme",
+          "default": false,
+          "platforms": {
+            "linux": {
+              "method": "vscode_ext",
+              "id": "jdinhlife.gruvbox"
+            },
+            "windows": {
+              "method": "vscode_ext",
+              "id": "jdinhlife.gruvbox"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "visual_studio",
+      "name": "Visual Studio 2022 (Windows)",
+      "packages": [
+        {
+          "id": "visual-studio-community",
+          "name": "Visual Studio 2022 Community",
+          "description": "Community IDE with .NET Desktop, C++, ASP.NET/Web, Node.js and Python workloads",
+          "default": false,
+          "platforms": {
+            "windows": {
+              "method": "visual_studio",
+              "id": "Microsoft.VisualStudio.2022.Community",
+              "url": "configs/visual_studio_community.vsconfig",
+              "packages": [
+                "Microsoft.VisualStudio.Workload.ManagedDesktop",
+                "Microsoft.VisualStudio.Workload.NativeDesktop",
+                "Microsoft.VisualStudio.Workload.NetWeb",
+                "Microsoft.VisualStudio.Workload.Node",
+                "Microsoft.VisualStudio.Workload.Python",
+                "Microsoft.VisualStudio.Component.NuGet",
+                "Microsoft.VisualStudio.Component.JavaScript.TypeScript",
+                "Microsoft.VisualStudio.Component.Roslyn.LanguageServices",
+                "Microsoft.VisualStudio.Component.Roslyn.Compiler",
+                "Microsoft.VisualStudio.Component.TypeScript.TSServer",
+                "Microsoft.VisualStudio.Component.WebDeploy",
+                "Microsoft.VisualStudio.Component.VC.Tools.x86.x64",
+                "Microsoft.VisualStudio.Component.Windows11SDK.26100",
+                "Microsoft.Component.PythonTools"
+              ],
+              "check": "if exist \"%ProgramFiles%\\Microsoft Visual Studio\\2022\\Community\\Common7\\IDE\\devenv.exe\" exit /b 0",
+              "size_kb": 12000000,
+              "note": "Installs Visual Studio 2022 Community using a .vsconfig/workload set via --override."
+            }
+          }
+        }
       ]
     }
   ]

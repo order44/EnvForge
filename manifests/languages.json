@@ -13,18 +13,45 @@
           "description": "Python 3 interpreter + pip + venv",
           "default": true,
           "platforms": {
-            "linux":   { "method": "apt", "packages": ["python3", "python3-pip", "python3-venv", "python3-dev"], "check": "command -v python3 && command -v pip3" },
-            "windows": { "method": "winget", "id": "Python.Python.3.12" }
+            "linux": {
+              "method": "apt",
+              "packages": [
+                "python3",
+                "python3-pip",
+                "python3-venv",
+                "python3-dev"
+              ],
+              "check": "command -v python3 && command -v pip3"
+            },
+            "windows": {
+              "method": "custom",
+              "check": "where py >NUL 2>&1 || where python >NUL 2>&1",
+              "commands": [
+                "powershell -NoProfile -ExecutionPolicy Bypass -Command \"$ErrorActionPreference='Stop'; $url='https://www.python.org/ftp/python/3.12.10/python-3.12.10-amd64.exe'; $dst=Join-Path $env:TEMP 'python-3.12.10-amd64.exe'; Invoke-WebRequest -UseBasicParsing -Uri $url -OutFile $dst; Start-Process -FilePath $dst -ArgumentList '/quiet InstallAllUsers=1 PrependPath=1 Include_pip=1 Include_test=0' -Wait; Remove-Item $dst -Force\""
+              ],
+              "size_kb": 30000,
+              "note": "Official Python installer from python.org with silent install, pip enabled, and PATH update."
+            }
           }
         },
         {
           "id": "uv",
           "name": "uv",
-          "description": "Fast Python package manager (Rust)",
+          "description": "Fast Python package manager",
           "default": true,
           "platforms": {
-            "linux":   { "method": "custom", "check": "command -v uv", "commands": ["curl -LsSf https://astral.sh/uv/install.sh | sh"] },
-            "windows": { "method": "winget", "id": "astral-sh.uv" }
+            "linux": {
+              "method": "custom",
+              "check": "command -v uv",
+              "commands": [
+                "set -e && curl -LsSf https://astral.sh/uv/install.sh | env UV_INSTALL_DIR=/usr/local INSTALLER_NO_MODIFY_PATH=1 sh"
+              ],
+              "size_kb": 18000
+            },
+            "windows": {
+              "method": "winget",
+              "id": "astral-sh.uv"
+            }
           }
         },
         {
@@ -35,9 +62,9 @@
           "platforms": {
             "linux": {
               "method": "custom",
-              "check": "test -d \"${PYENV_ROOT:-$HOME/.pyenv}\" || test -d /root/.pyenv || test -d /home/${SUDO_USER:-$USER}/.pyenv",
+              "check": "REAL_HOME=$(getent passwd ${SUDO_USER:-$USER} | cut -d: -f6); test -d \"${PYENV_ROOT:-$REAL_HOME/.pyenv}\"",
               "commands": [
-                "set -e && apt-get install -y make libssl-dev zlib1g-dev libbz2-dev libreadline-dev libsqlite3-dev llvm libncursesw5-dev xz-utils tk-dev libxml2-dev libxmlsec1-dev libffi-dev liblzma-dev && REAL_HOME=$(eval echo ~${SUDO_USER:-$USER}) && HOME=$REAL_HOME curl -fsSL https://pyenv.run | HOME=$REAL_HOME bash && chown -R ${SUDO_USER:-$USER}: $REAL_HOME/.pyenv 2>/dev/null || true"
+                "set -e && apt-get install -y make libssl-dev zlib1g-dev libbz2-dev libreadline-dev libsqlite3-dev llvm libncursesw5-dev xz-utils tk-dev libxml2-dev libxmlsec1-dev libffi-dev liblzma-dev && REAL_USER=${SUDO_USER:-$USER} && su -l \"$REAL_USER\" -c \"curl -fsSL https://pyenv.run | bash\""
               ]
             }
           }
@@ -48,8 +75,17 @@
           "description": "Python linter + formatter (Rust)",
           "default": true,
           "platforms": {
-            "linux":   { "method": "pip", "packages": ["ruff"], "check": "command -v ruff" },
-            "windows": { "method": "winget", "id": "astral-sh.Ruff" }
+            "linux": {
+              "method": "pip",
+              "packages": [
+                "ruff"
+              ],
+              "check": "command -v ruff"
+            },
+            "windows": {
+              "method": "winget",
+              "id": "astral-sh.ruff"
+            }
           }
         },
         {
@@ -58,8 +94,19 @@
           "description": "Static type checker for Python",
           "default": false,
           "platforms": {
-            "linux":   { "method": "pip", "packages": ["mypy"], "check": "command -v mypy" },
-            "windows": { "method": "pip", "packages": ["mypy"] }
+            "linux": {
+              "method": "pip",
+              "packages": [
+                "mypy"
+              ],
+              "check": "command -v mypy"
+            },
+            "windows": {
+              "method": "pip",
+              "packages": [
+                "mypy"
+              ]
+            }
           }
         },
         {
@@ -68,8 +115,19 @@
           "description": "Python code formatter",
           "default": false,
           "platforms": {
-            "linux":   { "method": "pip", "packages": ["black"], "check": "command -v black" },
-            "windows": { "method": "pip", "packages": ["black"] }
+            "linux": {
+              "method": "pip",
+              "packages": [
+                "black"
+              ],
+              "check": "command -v black"
+            },
+            "windows": {
+              "method": "pip",
+              "packages": [
+                "black"
+              ]
+            }
           }
         },
         {
@@ -78,8 +136,19 @@
           "description": "Python dependency manager",
           "default": false,
           "platforms": {
-            "linux":   { "method": "pip", "packages": ["poetry"], "check": "command -v poetry" },
-            "windows": { "method": "pip", "packages": ["poetry"] }
+            "linux": {
+              "method": "pip",
+              "packages": [
+                "poetry"
+              ],
+              "check": "command -v poetry"
+            },
+            "windows": {
+              "method": "pip",
+              "packages": [
+                "poetry"
+              ]
+            }
           }
         }
       ]
@@ -98,10 +167,14 @@
               "method": "custom",
               "check": "command -v go || test -x /usr/local/go/bin/go",
               "commands": [
-                "set -e && GO_VERSION=$(curl -fsSL https://go.dev/VERSION?m=text | head -1) && curl -fsSL https://go.dev/dl/${GO_VERSION}.linux-amd64.tar.gz | tar -C /usr/local -xzf - && ln -sf /usr/local/go/bin/go /usr/local/bin/go && ln -sf /usr/local/go/bin/gofmt /usr/local/bin/gofmt"
-              ]
+                "set -e && GO_ARCH=$(dpkg --print-architecture) && case \"$GO_ARCH\" in amd64|arm64) ;; *) echo \"unsupported architecture: $GO_ARCH\" >&2; exit 1 ;; esac && GO_VERSION=$(curl -fsSL https://go.dev/VERSION?m=text | head -n 1) && TMP=\"/tmp/${GO_VERSION}.linux-${GO_ARCH}.tar.gz\" && curl -fsSLo \"$TMP\" \"https://go.dev/dl/${GO_VERSION}.linux-${GO_ARCH}.tar.gz\" && rm -rf /usr/local/go && tar -C /usr/local -xzf \"$TMP\" && ln -sf /usr/local/go/bin/go /usr/local/bin/go && ln -sf /usr/local/go/bin/gofmt /usr/local/bin/gofmt && rm -f \"$TMP\""
+              ],
+              "size_kb": 150000
             },
-            "windows": { "method": "winget", "id": "GoLang.Go" }
+            "windows": {
+              "method": "winget",
+              "id": "GoLang.Go"
+            }
           }
         },
         {
@@ -113,7 +186,9 @@
             "linux": {
               "method": "custom",
               "check": "command -v gopls",
-              "commands": ["GOBIN=/usr/local/bin /usr/local/go/bin/go install golang.org/x/tools/gopls@latest"]
+              "commands": [
+                "set -e && GOBIN=/usr/local/bin $(command -v go || echo /usr/local/go/bin/go) install golang.org/x/tools/gopls@latest"
+              ]
             }
           }
         },
@@ -126,7 +201,9 @@
             "linux": {
               "method": "custom",
               "check": "command -v golangci-lint",
-              "commands": ["GOBIN=/usr/local/bin /usr/local/go/bin/go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@latest"]
+              "commands": [
+                "set -e && GOBIN=/usr/local/bin $(command -v go || echo /usr/local/go/bin/go) install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@latest"
+              ]
             }
           }
         },
@@ -139,7 +216,9 @@
             "linux": {
               "method": "custom",
               "check": "command -v dlv",
-              "commands": ["GOBIN=/usr/local/bin /usr/local/go/bin/go install github.com/go-delve/delve/cmd/dlv@latest"]
+              "commands": [
+                "set -e && GOBIN=/usr/local/bin $(command -v go || echo /usr/local/go/bin/go) install github.com/go-delve/delve/cmd/dlv@latest"
+              ]
             }
           }
         },
@@ -152,7 +231,9 @@
             "linux": {
               "method": "custom",
               "check": "command -v air",
-              "commands": ["GOBIN=/usr/local/bin /usr/local/go/bin/go install github.com/air-verse/air@latest"]
+              "commands": [
+                "set -e && GOBIN=/usr/local/bin $(command -v go || echo /usr/local/go/bin/go) install github.com/air-verse/air@latest"
+              ]
             }
           }
         }
@@ -170,10 +251,16 @@
           "platforms": {
             "linux": {
               "method": "custom",
-              "check": "command -v rustup || test -x $HOME/.cargo/bin/rustup",
-              "commands": ["curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain stable"]
+              "check": "command -v rustup >/dev/null 2>&1 || { REAL_HOME=$(getent passwd ${SUDO_USER:-$USER} | cut -d: -f6); test -x \"$REAL_HOME/.cargo/bin/rustup\"; }",
+              "commands": [
+                "set -e && REAL_USER=${SUDO_USER:-$USER} && su -l \"$REAL_USER\" -c \"curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain stable --profile minimal\" && REAL_HOME=$(getent passwd \"$REAL_USER\" | cut -d: -f6) && install -m 755 \"$REAL_HOME/.cargo/bin/rustup\" /usr/local/bin/rustup && install -m 755 \"$REAL_HOME/.cargo/bin/cargo\" /usr/local/bin/cargo && install -m 755 \"$REAL_HOME/.cargo/bin/rustc\" /usr/local/bin/rustc"
+              ],
+              "size_kb": 120000
             },
-            "windows": { "method": "winget", "id": "Rustlang.Rustup" }
+            "windows": {
+              "method": "winget",
+              "id": "Rustlang.Rustup"
+            }
           }
         },
         {
@@ -184,8 +271,10 @@
           "platforms": {
             "linux": {
               "method": "custom",
-              "check": "command -v rust-analyzer",
-              "commands": [". $HOME/.cargo/env 2>/dev/null; rustup component add rust-analyzer"]
+              "check": "command -v rust-analyzer || /usr/local/bin/rustup component list --installed 2>/dev/null | grep -q \"^rust-analyzer\"",
+              "commands": [
+                "set -e && /usr/local/bin/rustup component add rust-analyzer"
+              ]
             }
           }
         },
@@ -197,8 +286,10 @@
           "platforms": {
             "linux": {
               "method": "custom",
-              "check": ". $HOME/.cargo/env 2>/dev/null; cargo clippy --version >/dev/null 2>&1",
-              "commands": [". $HOME/.cargo/env 2>/dev/null; rustup component add clippy"]
+              "check": "command -v cargo-clippy >/dev/null 2>&1 || /usr/local/bin/rustup component list --installed 2>/dev/null | grep -q \"^clippy\"",
+              "commands": [
+                "set -e && /usr/local/bin/rustup component add clippy"
+              ]
             }
           }
         },
@@ -210,8 +301,10 @@
           "platforms": {
             "linux": {
               "method": "custom",
-              "check": ". $HOME/.cargo/env 2>/dev/null; cargo fmt --version >/dev/null 2>&1",
-              "commands": [". $HOME/.cargo/env 2>/dev/null; rustup component add rustfmt"]
+              "check": "command -v rustfmt >/dev/null 2>&1 || /usr/local/bin/rustup component list --installed 2>/dev/null | grep -q \"^rustfmt\"",
+              "commands": [
+                "set -e && /usr/local/bin/rustup component add rustfmt"
+              ]
             }
           }
         }
@@ -222,19 +315,23 @@
       "name": "JavaScript / TypeScript",
       "packages": [
         {
-          "id": "nvm",
-          "name": "nvm",
-          "description": "Node version manager",
+          "id": "nodejs",
+          "name": "nodejs-lts",
+          "description": "Node.js LTS + npm",
           "default": true,
           "platforms": {
             "linux": {
               "method": "custom",
-              "check": "test -d /usr/local/nvm || test -d $HOME/.nvm",
+              "check": "command -v node && command -v npm",
               "commands": [
-                "set -e && export NVM_DIR=/usr/local/nvm && mkdir -p $NVM_DIR && curl -fsSL https://raw.githubusercontent.com/nvm-sh/nvm/master/install.sh | PROFILE=/dev/null bash && . $NVM_DIR/nvm.sh && nvm install --lts && ln -sf $(which node) /usr/local/bin/node && ln -sf $(which npm) /usr/local/bin/npm"
-              ]
+                "set -e && apt-get install -y ca-certificates curl gnupg && mkdir -p /etc/apt/keyrings && curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key | gpg --dearmor -o /etc/apt/keyrings/nodesource.gpg && NODE_MAJOR=22 && echo \"deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_${NODE_MAJOR}.x nodistro main\" > /etc/apt/sources.list.d/nodesource.list && apt-get update && apt-get install -y nodejs"
+              ],
+              "size_kb": 120000
             },
-            "windows": { "method": "winget", "id": "CoreyButler.NVMforWindows" }
+            "windows": {
+              "method": "winget",
+              "id": "OpenJS.NodeJS.LTS"
+            }
           }
         },
         {
@@ -243,8 +340,17 @@
           "description": "Fast npm alternative",
           "default": false,
           "platforms": {
-            "linux":   { "method": "npm", "packages": ["pnpm"], "check": "command -v pnpm" },
-            "windows": { "method": "winget", "id": "pnpm.pnpm" }
+            "linux": {
+              "method": "npm",
+              "packages": [
+                "pnpm"
+              ],
+              "check": "command -v pnpm || npm list -g --depth=0 pnpm >/dev/null 2>&1"
+            },
+            "windows": {
+              "method": "winget",
+              "id": "pnpm.pnpm"
+            }
           }
         },
         {
@@ -253,8 +359,19 @@
           "description": "TypeScript compiler",
           "default": true,
           "platforms": {
-            "linux":   { "method": "npm", "packages": ["typescript"], "check": "command -v tsc" },
-            "windows": { "method": "npm", "packages": ["typescript"] }
+            "linux": {
+              "method": "npm",
+              "packages": [
+                "typescript"
+              ],
+              "check": "command -v tsc || npm list -g --depth=0 typescript >/dev/null 2>&1"
+            },
+            "windows": {
+              "method": "npm",
+              "packages": [
+                "typescript"
+              ]
+            }
           }
         },
         {
@@ -263,8 +380,19 @@
           "description": "Run TypeScript directly",
           "default": false,
           "platforms": {
-            "linux":   { "method": "npm", "packages": ["tsx"], "check": "command -v tsx" },
-            "windows": { "method": "npm", "packages": ["tsx"] }
+            "linux": {
+              "method": "npm",
+              "packages": [
+                "tsx"
+              ],
+              "check": "command -v tsx || npm list -g --depth=0 tsx >/dev/null 2>&1"
+            },
+            "windows": {
+              "method": "npm",
+              "packages": [
+                "tsx"
+              ]
+            }
           }
         },
         {
@@ -273,8 +401,19 @@
           "description": "TypeScript LSP",
           "default": true,
           "platforms": {
-            "linux":   { "method": "npm", "packages": ["typescript-language-server"], "check": "command -v typescript-language-server" },
-            "windows": { "method": "npm", "packages": ["typescript-language-server"] }
+            "linux": {
+              "method": "npm",
+              "packages": [
+                "typescript-language-server"
+              ],
+              "check": "command -v typescript-language-server || npm list -g --depth=0 typescript-language-server >/dev/null 2>&1"
+            },
+            "windows": {
+              "method": "npm",
+              "packages": [
+                "typescript-language-server"
+              ]
+            }
           }
         },
         {
@@ -283,8 +422,19 @@
           "description": "JavaScript/TypeScript linter",
           "default": true,
           "platforms": {
-            "linux":   { "method": "npm", "packages": ["eslint"], "check": "command -v eslint" },
-            "windows": { "method": "npm", "packages": ["eslint"] }
+            "linux": {
+              "method": "npm",
+              "packages": [
+                "eslint"
+              ],
+              "check": "command -v eslint || npm list -g --depth=0 eslint >/dev/null 2>&1"
+            },
+            "windows": {
+              "method": "npm",
+              "packages": [
+                "eslint"
+              ]
+            }
           }
         },
         {
@@ -293,8 +443,19 @@
           "description": "Code formatter",
           "default": true,
           "platforms": {
-            "linux":   { "method": "npm", "packages": ["prettier"], "check": "command -v prettier" },
-            "windows": { "method": "npm", "packages": ["prettier"] }
+            "linux": {
+              "method": "npm",
+              "packages": [
+                "prettier"
+              ],
+              "check": "command -v prettier || npm list -g --depth=0 prettier >/dev/null 2>&1"
+            },
+            "windows": {
+              "method": "npm",
+              "packages": [
+                "prettier"
+              ]
+            }
           }
         }
       ]

@@ -173,9 +173,10 @@ func categoryOrder(id string) int {
 		"editors_fresh":     7,
 		"editors_other":     8,
 		"dev_tools":         9,
-		"pentest":           10,
-		"reversing":         11,
-		"extras":            12,
+		"containers":        10,
+		"pentest":           11,
+		"reversing":         12,
+		"extras":            13,
 	}
 	if o, ok := order[id]; ok {
 		return o

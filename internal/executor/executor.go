@@ -4,10 +4,14 @@ import (
 	"bufio"
 	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
 	"os"
 	"os/exec"
+	"os/user"
+	"path/filepath"
+	"runtime"
 	"strings"
 	"sync"
 	"time"
@@ -112,11 +116,17 @@ func RunShell(command string) Result {
 }
 
 func RunShellContext(ctx context.Context, command string) Result {
+	if runtime.GOOS == "windows" {
+		return RunCommandContext(ctx, "cmd", "/C", command)
+	}
 	return RunCommandContext(ctx, "sh", "-c", command)
 }
 
 // RunShellRetry runs a shell command with retry on transient failures.
 func RunShellRetry(ctx context.Context, cfg RetryConfig, command string) Result {
+	if runtime.GOOS == "windows" {
+		return RunCommandRetry(ctx, cfg, "cmd", "/C", command)
+	}
 	return RunCommandRetry(ctx, cfg, "sh", "-c", command)
 }
 
@@ -195,11 +205,94 @@ func CommandExists(name string) bool {
 }
 
 func CheckShellSucceeds(ctx context.Context, command string) bool {
-	cmd := exec.CommandContext(ctx, "sh", "-c", command)
+	var cmd *exec.Cmd
+	if runtime.GOOS == "windows" {
+		cmd = exec.CommandContext(ctx, "cmd", "/C", command)
+	} else {
+		cmd = exec.CommandContext(ctx, "sh", "-c", command)
+	}
 	cmd.Env = nonInteractiveEnv()
 	cmd.Stdout = io.Discard
 	cmd.Stderr = io.Discard
 	return cmd.Run() == nil
+}
+
+func VSCodeExtensionInstalled(ctx context.Context, id string) bool {
+	id = strings.ToLower(strings.TrimSpace(id))
+	if id == "" {
+		return false
+	}
+
+	cliCandidates := []string{"code", "code.cmd"}
+	if runtime.GOOS == "windows" {
+		cliCandidates = []string{}
+		for _, p := range []string{
+			filepath.Join(os.Getenv("LOCALAPPDATA"), "Programs", "Microsoft VS Code", "bin", "code.cmd"),
+			filepath.Join(os.Getenv("ProgramFiles"), "Microsoft VS Code", "bin", "code.cmd"),
+			filepath.Join(os.Getenv("ProgramFiles(x86)"), "Microsoft VS Code", "bin", "code.cmd"),
+			"code.cmd",
+			"code",
+		} {
+			if p != "" {
+				cliCandidates = append(cliCandidates, p)
+			}
+		}
+	}
+
+	for _, cli := range cliCandidates {
+		for _, userName := range possibleUsersForChecks() {
+			out, err := commandOutputAs(ctx, userName, cli, "--list-extensions")
+			if err == nil {
+				for _, line := range strings.Split(strings.TrimSpace(string(out)), "\n") {
+					if strings.EqualFold(strings.TrimSpace(line), id) {
+						return true
+					}
+				}
+			}
+		}
+	}
+
+	for _, dir := range vscodeExtensionDirs() {
+		entries, err := os.ReadDir(dir)
+		if err != nil {
+			continue
+		}
+		for _, entry := range entries {
+			name := strings.ToLower(entry.Name())
+			if name == id || strings.HasPrefix(name, id+"-") {
+				return true
+			}
+		}
+	}
+
+	return false
+}
+
+func PipxPackageInstalled(ctx context.Context, spec string) bool {
+	pkgName := normalizePipxSpec(spec)
+	if pkgName == "" {
+		return false
+	}
+
+	for _, userName := range possibleUsersForChecks() {
+		out, err := commandOutputAs(ctx, userName, "pipx", "list", "--json")
+		if err != nil {
+			continue
+		}
+		var body struct {
+			Venvs map[string]json.RawMessage `json:"venvs"`
+		}
+		if err := json.Unmarshal(out, &body); err != nil {
+			continue
+		}
+		for name := range body.Venvs {
+			if strings.EqualFold(name, pkgName) {
+				return true
+			}
+		}
+	}
+
+	return false
 }
 
 // --- internal ---
@@ -271,12 +364,178 @@ func isTransient(r Result) bool {
 }
 
 func nonInteractiveEnv() []string {
-	return append(os.Environ(),
-		"DEBIAN_FRONTEND=noninteractive",
-		"NEEDRESTART_MODE=a",
-		"UCF_FORCE_CONFFOLD=1",
-		"APT_LISTCHANGES_FRONTEND=none",
-	)
+	env := append([]string{}, os.Environ()...)
+	if runtime.GOOS != "windows" {
+		env = setEnv(env, "DEBIAN_FRONTEND", "noninteractive")
+		env = setEnv(env, "NEEDRESTART_MODE", "a")
+		env = setEnv(env, "UCF_FORCE_CONFFOLD", "1")
+		env = setEnv(env, "APT_LISTCHANGES_FRONTEND", "none")
+	}
+
+	realHome := realUserHome()
+	if os.Getenv("SUDO_USER") != "" && realHome != "" {
+		env = setEnv(env, "HOME", realHome)
+	}
+	env = setEnv(env, "PATH", augmentedPath(realHome))
+	return env
+}
+
+func augmentedPath(realHome string) string {
+	sep := string(os.PathListSeparator)
+	seen := map[string]bool{}
+	var parts []string
+
+	add := func(p string) {
+		if p == "" || seen[p] {
+			return
+		}
+		seen[p] = true
+		parts = append(parts, p)
+	}
+
+	for _, p := range strings.Split(os.Getenv("PATH"), sep) {
+		add(strings.TrimSpace(p))
+	}
+
+	if runtime.GOOS == "windows" {
+		for _, p := range []string{
+			filepath.Join(os.Getenv("SystemRoot"), "System32"),
+			filepath.Join(os.Getenv("SystemRoot"), "System32", "WindowsPowerShell", "v1.0"),
+			filepath.Join(os.Getenv("LOCALAPPDATA"), "Microsoft", "WindowsApps"),
+			filepath.Join(os.Getenv("LOCALAPPDATA"), "Programs", "Microsoft VS Code", "bin"),
+			filepath.Join(os.Getenv("ProgramFiles"), "Microsoft VS Code", "bin"),
+			filepath.Join(os.Getenv("ProgramFiles(x86)"), "Microsoft VS Code", "bin"),
+			filepath.Join(os.Getenv("ProgramFiles"), "nodejs"),
+			filepath.Join(os.Getenv("APPDATA"), "npm"),
+		} {
+			add(p)
+		}
+		for _, base := range []string{os.Getenv("ProgramFiles"), os.Getenv("LOCALAPPDATA")} {
+			if base == "" {
+				continue
+			}
+			for _, pat := range []string{
+				filepath.Join(base, "Python*"),
+				filepath.Join(base, "Programs", "Python", "Python*"),
+			} {
+				matches, _ := filepath.Glob(pat)
+				for _, m := range matches {
+					add(m)
+					add(filepath.Join(m, "Scripts"))
+				}
+			}
+		}
+		return strings.Join(parts, sep)
+	}
+
+	for _, p := range []string{
+		"/usr/local/bin",
+		"/usr/local/sbin",
+		"/usr/bin",
+		"/usr/sbin",
+		"/bin",
+		"/sbin",
+		"/usr/local",
+		"/root/.local/bin",
+		"/root/.cargo/bin",
+	} {
+		add(p)
+	}
+
+	if realHome != "" {
+		for _, p := range []string{
+			filepath.Join(realHome, ".local", "bin"),
+			filepath.Join(realHome, ".cargo", "bin"),
+			filepath.Join(realHome, ".pyenv", "bin"),
+			filepath.Join(realHome, ".pyenv", "shims"),
+			filepath.Join(realHome, ".local", "share", "pnpm"),
+			filepath.Join(realHome, ".npm-global", "bin"),
+		} {
+			add(p)
+		}
+
+		nvmBins, _ := filepath.Glob(filepath.Join(realHome, ".nvm", "versions", "node", "*", "bin"))
+		for _, p := range nvmBins {
+			add(p)
+		}
+	}
+
+	return strings.Join(parts, sep)
+}
+
+func setEnv(env []string, key, value string) []string {
+	prefix := key + "="
+	for i, item := range env {
+		if strings.HasPrefix(item, prefix) {
+			env[i] = prefix + value
+			return env
+		}
+	}
+	return append(env, prefix+value)
+}
+
+func realUserHome() string {
+	if sudoUser := os.Getenv("SUDO_USER"); sudoUser != "" {
+		if u, err := user.Lookup(sudoUser); err == nil {
+			return u.HomeDir
+		}
+	}
+	if home, err := os.UserHomeDir(); err == nil {
+		return home
+	}
+	return ""
+}
+
+func possibleUsersForChecks() []string {
+	users := []string{""}
+	if sudoUser := os.Getenv("SUDO_USER"); sudoUser != "" {
+		users = append(users, sudoUser)
+	}
+	return users
+}
+
+func commandOutputAs(ctx context.Context, userName, name string, args ...string) ([]byte, error) {
+	if userName == "" || runtime.GOOS == "windows" {
+		cmd := exec.CommandContext(ctx, name, args...)
+		cmd.Env = nonInteractiveEnv()
+		return cmd.Output()
+	}
+	cmd := exec.CommandContext(ctx, "su", "-l", userName, "-c", joinCmd(name, args))
+	cmd.Env = nonInteractiveEnv()
+	return cmd.Output()
+}
+
+func vscodeExtensionDirs() []string {
+	home := realUserHome()
+	if home == "" {
+		return nil
+	}
+	return []string{
+		filepath.Join(home, ".vscode", "extensions"),
+		filepath.Join(home, ".vscode-server", "extensions"),
+	}
+}
+
+func normalizePipxSpec(spec string) string {
+	spec = strings.TrimSpace(spec)
+	if spec == "" {
+		return ""
+	}
+	if i := strings.Index(spec, "["); i >= 0 {
+		spec = spec[:i]
+	}
+	if i := strings.Index(spec, "=="); i >= 0 {
+		spec = spec[:i]
+	}
+	if strings.HasPrefix(spec, "git+") {
+		spec = strings.TrimPrefix(spec, "git+")
+		spec = strings.TrimSuffix(spec, ".git")
+		parts := strings.Split(strings.Trim(spec, "/"), "/")
+		if len(parts) > 0 {
+			spec = parts[len(parts)-1]
+		}
+	}
+	return strings.ToLower(spec)
 }
 
 func isAptLike(name string) bool {

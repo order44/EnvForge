@@ -5,8 +5,10 @@ import (
 	"fmt"
 	"os"
 	"os/user"
+	"path/filepath"
 	"runtime"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/envforge/envforge/internal/executor"
@@ -33,9 +35,143 @@ func runAsRealUser(ctx context.Context, cmd string) executor.Result {
 	return executor.RunShellContext(ctx, wrapped)
 }
 
-// pipxAvailable checks if pipx is installed on the system.
 func pipxAvailable() bool {
 	return executor.CommandExists("pipx")
+}
+
+func pipCommand() (name string, args []string) {
+	if runtime.GOOS == "windows" {
+		switch {
+		case executor.CommandExists("py"):
+			return "py", []string{"-m", "pip"}
+		case executor.CommandExists("python"):
+			return "python", []string{"-m", "pip"}
+		case executor.CommandExists("pip"):
+			return "pip", nil
+		default:
+			return "pip", nil
+		}
+	}
+
+	switch {
+	case executor.CommandExists("pip3"):
+		return "pip3", nil
+	case executor.CommandExists("python3"):
+		return "python3", []string{"-m", "pip"}
+	case executor.CommandExists("python"):
+		return "python", []string{"-m", "pip"}
+	default:
+		return "pip3", nil
+	}
+}
+
+func ensureLinuxPip(ctx context.Context) error {
+	if runtime.GOOS != "linux" {
+		return nil
+	}
+	if executor.CommandExists("pip3") || executor.CommandExists("python3") {
+		return nil
+	}
+	res := executor.RunCommandContext(ctx,
+		"apt-get",
+		"-o", "Dpkg::Options::=--force-confold",
+		"-o", "Dpkg::Options::=--force-confdef",
+		"install", "-y",
+		"python3", "python3-pip",
+	)
+	if !res.IsSuccess() {
+		return fmt.Errorf("failed to install python3/pip3: %s", nonEmpty(res.Stderr, res.Stdout))
+	}
+	return nil
+}
+
+func npmCommand() string {
+	if executor.CommandExists("npm") {
+		return "npm"
+	}
+	if runtime.GOOS == "windows" {
+		const defaultNpm = `C:\Program Files\nodejs\npm.cmd`
+		if _, err := os.Stat(defaultNpm); err == nil {
+			return defaultNpm
+		}
+	}
+	return "npm"
+}
+
+func ensureLinuxNpm(ctx context.Context) error {
+	if runtime.GOOS != "linux" {
+		return nil
+	}
+	if executor.CommandExists("npm") {
+		return nil
+	}
+	res := executor.RunCommandContext(ctx,
+		"apt-get",
+		"-o", "Dpkg::Options::=--force-confold",
+		"-o", "Dpkg::Options::=--force-confdef",
+		"install", "-y",
+		"nodejs", "npm",
+	)
+	if !res.IsSuccess() {
+		return fmt.Errorf("failed to install nodejs/npm: %s", nonEmpty(res.Stderr, res.Stdout))
+	}
+	return nil
+}
+
+func resolveVSCodeCLI() string {
+	candidates := []string{"code", "code.cmd"}
+	if runtime.GOOS == "windows" {
+		candidates = append(candidates,
+			filepath.Join(os.Getenv("LOCALAPPDATA"), "Programs", "Microsoft VS Code", "bin", "code.cmd"),
+			filepath.Join(os.Getenv("ProgramFiles"), "Microsoft VS Code", "bin", "code.cmd"),
+			filepath.Join(os.Getenv("ProgramFiles(x86)"), "Microsoft VS Code", "bin", "code.cmd"),
+		)
+	}
+
+	for _, candidate := range candidates {
+		if candidate == "" {
+			continue
+		}
+		if strings.Contains(candidate, "\\") || strings.Contains(candidate, "/") {
+			if _, err := os.Stat(candidate); err == nil {
+				return candidate
+			}
+			continue
+		}
+		if executor.CommandExists(candidate) {
+			return candidate
+		}
+	}
+	return ""
+}
+
+func windowsQuote(s string) string {
+	return "\"" + strings.ReplaceAll(s, "\"", "\"\"") + "\""
+}
+
+var wingetSourcePrepareOnce sync.Once
+var wingetSourcePrepareErr error
+
+func prepareWingetSource(ctx context.Context) error {
+	if runtime.GOOS != "windows" {
+		return nil
+	}
+	wingetSourcePrepareOnce.Do(func() {
+		res := executor.RunCommandContext(ctx, "winget", "source", "update")
+		if res.IsSuccess() {
+			return
+		}
+		reset := executor.RunCommandContext(ctx, "winget", "source", "reset", "--force")
+		if !reset.IsSuccess() {
+			wingetSourcePrepareErr = fmt.Errorf("winget source update failed: %s; reset failed: %s", nonEmpty(res.Stderr, res.Stdout), nonEmpty(reset.Stderr, reset.Stdout))
+			return
+		}
+		res = executor.RunCommandContext(ctx, "winget", "source", "update")
+		if !res.IsSuccess() {
+			wingetSourcePrepareErr = fmt.Errorf("winget source update failed after reset: %s", nonEmpty(res.Stderr, res.Stdout))
+		}
+	})
+	return wingetSourcePrepareErr
 }
 
 // ---------------------------------------------------------------------------
@@ -76,16 +212,30 @@ func (w *WingetInstaller) Install(ctx context.Context, pkg manifest.Package, pla
 	if runtime.GOOS != "windows" {
 		return InstallResult{Status: StatusSkipped, Error: "winget is windows-only", Duration: time.Since(start)}
 	}
+	if err := prepareWingetSource(ctx); err != nil {
+		return InstallResult{Status: StatusFailed, Duration: time.Since(start), Error: err.Error()}
+	}
 	r := executor.RunCommandContext(ctx, "winget", "install", "-e",
 		"--id", plat.ID,
+		"--source", "winget",
 		"--accept-package-agreements",
 		"--accept-source-agreements",
+		"--disable-interactivity",
 		"--silent",
 	)
 	if !r.IsSuccess() {
 		out := r.Stdout + r.Stderr
 		if strings.Contains(out, "already installed") || strings.Contains(out, "No newer package") {
 			return InstallResult{Status: StatusSkipped, Error: "already installed", Duration: time.Since(start), Output: r.Stdout}
+		}
+		if r.ExitCode == 2147954402 {
+			return InstallResult{Status: StatusFailed, Error: "winget timeout (0x80072ee2): проверь интернет, VPN/Proxy, и сам winget source; также попробуй вручную `winget install --source winget --id " + plat.ID + " -e`", Duration: time.Since(start), Output: out}
+		}
+		if r.ExitCode == 2316632107 {
+			return InstallResult{Status: StatusFailed, Error: "winget reported 'No applicable update found' (0x8A15002B). Обычно это поломанный/несинхронизированный source App Installer. Попробуй вручную: `winget source reset --force`, затем `winget source update`, затем `winget search --id " + plat.ID + " -e`", Duration: time.Since(start), Output: out}
+		}
+		if r.ExitCode == 2316632084 {
+			return InstallResult{Status: StatusFailed, Error: "winget did not find the package (0x8A150014). Проверь package id и выполни вручную `winget search --id " + plat.ID + " -e`", Duration: time.Since(start), Output: out}
 		}
 		return InstallResult{Status: StatusFailed, Error: nonEmpty(r.Stderr, r.Stdout), Duration: time.Since(start), Output: r.Stdout}
 	}
@@ -141,13 +291,25 @@ func (p *PipInstaller) Name() string { return "pip" }
 func (p *PipInstaller) Install(ctx context.Context, pkg manifest.Package, plat manifest.Platform) InstallResult {
 	start := time.Now()
 
-	args := append([]string{"install", "--break-system-packages"}, plat.Packages...)
-	r := executor.RunCommandRetry(ctx, executor.DefaultRetry, "pip3", args...)
+	if runtime.GOOS == "linux" {
+		if err := ensureLinuxPip(ctx); err != nil {
+			return InstallResult{Status: StatusFailed, Duration: time.Since(start), Error: err.Error()}
+		}
+	}
+
+	name, prefix := pipCommand()
+	args := append(append([]string{}, prefix...), "install")
+	if runtime.GOOS != "windows" {
+		args = append(args, "--break-system-packages")
+	}
+	args = append(args, plat.Packages...)
+
+	r := executor.RunCommandRetry(ctx, executor.DefaultRetry, name, args...)
 	if r.IsSuccess() {
 		return InstallResult{Status: StatusSuccess, Duration: time.Since(start), Output: r.Stdout}
 	}
 
-	if pipxAvailable() && len(plat.Packages) > 0 {
+	if runtime.GOOS != "windows" && pipxAvailable() && len(plat.Packages) > 0 {
 		pipxArgs := append([]string{"install"}, plat.Packages...)
 		r2 := executor.RunCommandRetry(ctx, executor.DefaultRetry, "pipx", pipxArgs...)
 		if r2.IsSuccess() {
@@ -170,16 +332,26 @@ func (p *PipxInstaller) Name() string { return "pipx" }
 func (p *PipxInstaller) Install(ctx context.Context, pkg manifest.Package, plat manifest.Platform) InstallResult {
 	start := time.Now()
 	if !pipxAvailable() {
+		if runtime.GOOS != "linux" {
+			return InstallResult{Status: StatusFailed, Duration: time.Since(start), Error: "pipx is not installed"}
+		}
 		inst := executor.RunCommandContext(ctx, "apt-get",
 			"-o", "Dpkg::Options::=--force-confold",
+			"-o", "Dpkg::Options::=--force-confdef",
 			"install", "-y", "pipx")
 		if !inst.IsSuccess() {
 			return InstallResult{Status: StatusFailed, Duration: time.Since(start),
-				Error: "pipx not installed and apt install pipx failed: " + inst.Stderr}
+				Error: "pipx not installed and apt install pipx failed: " + nonEmpty(inst.Stderr, inst.Stdout)}
 		}
 	}
-	args := append([]string{"install"}, plat.Packages...)
-	r := executor.RunCommandRetry(ctx, executor.DefaultRetry, "pipx", args...)
+
+	cmd := fmt.Sprintf("pipx install %s", shellJoin(plat.Packages))
+	if runtime.GOOS == "linux" {
+		r := runAsRealUser(ctx, cmd)
+		return resultFrom(r, start)
+	}
+
+	r := executor.RunShellRetry(ctx, executor.DefaultRetry, cmd)
 	return resultFrom(r, start)
 }
 
@@ -193,8 +365,15 @@ func (n *NpmInstaller) Name() string { return "npm" }
 
 func (n *NpmInstaller) Install(ctx context.Context, pkg manifest.Package, plat manifest.Platform) InstallResult {
 	start := time.Now()
+
+	if runtime.GOOS == "linux" {
+		if err := ensureLinuxNpm(ctx); err != nil {
+			return InstallResult{Status: StatusFailed, Duration: time.Since(start), Error: err.Error()}
+		}
+	}
+
 	args := append([]string{"install", "-g"}, plat.Packages...)
-	r := executor.RunCommandRetry(ctx, executor.DefaultRetry, "npm", args...)
+	r := executor.RunCommandRetry(ctx, executor.DefaultRetry, npmCommand(), args...)
 	return resultFrom(r, start)
 }
 
@@ -257,15 +436,12 @@ func (g *GitInstaller) Install(ctx context.Context, pkg manifest.Package, plat m
 		r := executor.RunShellRetry(ctx, executor.DefaultRetry,
 			fmt.Sprintf("cd %q && git pull --ff-only", dest))
 		if r.IsSuccess() {
-			return InstallResult{Status: StatusSuccess, Duration: time.Since(start),
-				Output: "already cloned; pulled updates\n" + r.Stdout}
+			return InstallResult{Status: StatusSuccess, Duration: time.Since(start), Output: "already cloned; pulled updates\n" + r.Stdout}
 		}
-		return InstallResult{Status: StatusSuccess, Duration: time.Since(start),
-			Output: "already cloned (pull failed: " + r.Stderr + ")"}
+		return InstallResult{Status: StatusSuccess, Duration: time.Since(start), Output: "already cloned (pull failed: " + r.Stderr + ")"}
 	}
 
-	r := executor.RunCommandRetry(ctx, executor.DefaultRetry,
-		"git", "clone", "--depth=1", plat.URL, dest)
+	r := executor.RunCommandRetry(ctx, executor.DefaultRetry, "git", "clone", "--depth=1", plat.URL, dest)
 	if !r.IsSuccess() {
 		return InstallResult{Status: StatusFailed, Duration: time.Since(start), Output: r.Stdout, Error: r.Stderr}
 	}
@@ -323,6 +499,20 @@ type ManualInstaller struct{}
 func (m *ManualInstaller) Name() string { return "manual" }
 
 func (m *ManualInstaller) Install(ctx context.Context, pkg manifest.Package, plat manifest.Platform) InstallResult {
+	start := time.Now()
+	var outBuf strings.Builder
+
+	for _, cmd := range plat.Commands {
+		if ctx.Err() != nil {
+			return InstallResult{Status: StatusFailed, Error: "cancelled", Duration: time.Since(start), Output: outBuf.String()}
+		}
+		r := executor.RunShellRetry(ctx, executor.DefaultRetry, cmd)
+		outBuf.WriteString(r.Stdout)
+		if !r.IsSuccess() {
+			return InstallResult{Status: StatusFailed, Duration: time.Since(start), Output: outBuf.String(), Error: nonEmpty(r.Stderr, r.Stdout)}
+		}
+	}
+
 	note := plat.Note
 	if note == "" {
 		note = "manual installation required"
@@ -330,7 +520,10 @@ func (m *ManualInstaller) Install(ctx context.Context, pkg manifest.Package, pla
 	if plat.URL != "" {
 		note += "\n  see: " + plat.URL
 	}
-	return InstallResult{Status: StatusSkipped, Error: note}
+	if len(plat.Commands) > 0 {
+		note = "manual step required after prerequisites were prepared\n\n" + note
+	}
+	return InstallResult{Status: StatusSkipped, Duration: time.Since(start), Output: outBuf.String(), Error: note}
 }
 
 // ---------------------------------------------------------------------------
@@ -351,12 +544,7 @@ func (c *CustomInstaller) Install(ctx context.Context, pkg manifest.Package, pla
 		r := executor.RunShellRetry(ctx, executor.DefaultRetry, cmd)
 		outBuf.WriteString(r.Stdout)
 		if !r.IsSuccess() {
-			return InstallResult{
-				Status:   StatusFailed,
-				Duration: time.Since(start),
-				Output:   outBuf.String(),
-				Error:    nonEmpty(r.Stderr, r.Stdout),
-			}
+			return InstallResult{Status: StatusFailed, Duration: time.Since(start), Output: outBuf.String(), Error: nonEmpty(r.Stderr, r.Stdout)}
 		}
 	}
 	return InstallResult{Status: StatusSuccess, Duration: time.Since(start), Output: outBuf.String()}
@@ -372,8 +560,18 @@ func (v *VscodeExtInstaller) Name() string { return "vscode_ext" }
 
 func (v *VscodeExtInstaller) Install(ctx context.Context, pkg manifest.Package, plat manifest.Platform) InstallResult {
 	start := time.Now()
-	cmd := fmt.Sprintf("code --install-extension %s --force", plat.ID)
-	r := runAsRealUser(ctx, cmd)
+	cli := resolveVSCodeCLI()
+	if cli == "" {
+		return InstallResult{Status: StatusSkipped, Duration: time.Since(start), Error: "VS Code CLI not found (expected code/code.cmd). Install VS Code first or add its bin directory to PATH."}
+	}
+
+	var r executor.Result
+	if runtime.GOOS == "windows" {
+		r = executor.RunCommandContext(ctx, cli, "--install-extension", plat.ID, "--force")
+	} else {
+		cmd := fmt.Sprintf("%s --install-extension %s --force", cli, plat.ID)
+		r = runAsRealUser(ctx, cmd)
+	}
 	if !r.IsSuccess() {
 		return InstallResult{Status: StatusFailed, Duration: time.Since(start), Output: r.Stdout, Error: nonEmpty(r.Stderr, r.Stdout)}
 	}
@@ -408,4 +606,36 @@ func lookupBool(items []string, key string) (bool, bool) {
 		}
 	}
 	return false, false
+}
+
+func shellJoin(items []string) string {
+	quoted := make([]string, 0, len(items))
+	for _, it := range items {
+		quoted = append(quoted, shellQuoteLite(it))
+	}
+	return strings.Join(quoted, " ")
+}
+
+func shellQuoteLite(s string) string {
+	if s == "" {
+		return "''"
+	}
+	if strings.IndexFunc(s, func(r rune) bool {
+		switch {
+		case r >= 'a' && r <= 'z':
+			return false
+		case r >= 'A' && r <= 'Z':
+			return false
+		case r >= '0' && r <= '9':
+			return false
+		}
+		switch r {
+		case '/', '.', '_', '-', '+', '=', ':', '@', '%', ',':
+			return false
+		}
+		return true
+	}) < 0 {
+		return s
+	}
+	return "'" + strings.ReplaceAll(s, "'", "'\\''") + "'"
 }
